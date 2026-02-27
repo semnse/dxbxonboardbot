@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "e:\\Carrot1_WaitingClient"],
+      "env": {
+        "ALLOWED_DIRECTORIES": "app,tools,tests,docs,migrations"
+      }
+    },
+    "database": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://postgres:postgres@localhost:5432/onboarding_bot"]
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "e:\\Carrot1_WaitingClient"],
+      "env": {
+        "GIT_AUTHOR_NAME": "DXBX AI Agent",
+        "GIT_AUTHOR_EMAIL": "ai@dxbx.ru"
+      }
+    },
+    "terminal": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-terminal"],
+      "env": {
+        "ALLOWED_COMMANDS": "python,pip,git,docker,uvicorn,pytest,curl"
+      }
+    }
+  }
+}
