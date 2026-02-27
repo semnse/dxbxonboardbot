@@ -1,0 +1,1285 @@
+
+
+============================================================
+  ПРОВЕРКА BITRIX24 REST API
+  Webhook: https://docsinbox.bitrix24.ru/rest/100398/cu1jtnas...
+============================================================
+
+============================================================
+ТЕСТ 1: Проверка доступности портала
+============================================================
+[OK] Портал доступен!
+   ID портала: 100398
+   Логин: N/A
+   Email: N/A
+
+============================================================
+ТЕСТ 2: Получение списка стадий сделок
+============================================================
+[ERROR] Ошибка: 404
+
+============================================================
+ТЕСТ 3: Получение 3 последних сделок
+============================================================
+[OK] Получено сделок: 50
+
+   Сделки:
+
+   -- Сделка #290812 --
+   Название: ИП Краснова Анжелика Николаевна 638100111000 Массе кафе, Самарская обл., Сергиевск, Ленина ул., дом № 93а
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290810 --
+   Название: ООО "Ника" 5053042268  ресторан, Московская обл., Красногорск г., Строителей б-р., дом № 7
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290808 --
+   Название: ИП Шестаков Дмитрий Викторович 772345141049 Малина кейтеринг, Москва г., Большая Почтовая ул., дом № 18
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290800 --
+   Название: ИП Галина Елена Ивановна 190104180799 Хлебник пекарня, Санкт-Петербург г., Ветеранов пр-кт., дом № 160
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290798 --
+   Название: ООО "Терве Ранта" 1035000290 Терве Ранта столовая, Карелия Респ., Куркиеки п., Гористая ул., дом № 1а
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290794 --
+   Название: ИП Салаев Бекзод Шоназарович 350904304517 Узбек кафе, Вологодская обл, Грязовец г., Ленина ул., дом № 72 а
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290792 --
+   Название: ИП Федотова Анастасия Александровна 780264061630 Collage кальянная, Санкт-Петербург г., Большая Разночинная ул., дом № 7
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290790 --
+   Название: ООО "Хойригер" 4725002027 Хойригер ресторан, Ленинградская обл., Ломоносовский р-н., Иннолово д., Центральная ул., дом № 1
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290782 --
+   Название: ООО "Перспектива" 7810964239  буфет, Санкт-Петербург г., Типанова ул., дом № 22, стр. 1, помещ. 566Н
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290780 --
+   Название: ООО ГК Армаган 7810409468
+   Стадия: C122:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290776 --
+   Название: ООО "Феникс" 5039003161 Феникс ресторан, Московская обл., Пущино г., мкр. Г, дом № 22, пом.1
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290774 --
+   Название: ООО "Ярослава" 0300006395
+   Стадия: C122:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290768 --
+   Название: ООО "МЯТА-Д" 9705141335 Мята Lounge ресторан, Москва г., Дубининская ул., дом № 35, этаж 1, пом. 3, ком. 12
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290766 --
+   Название: ИП Тарозене Елена Александровна 524703293675  кафе, Москва г., Волхонка ул., дом № 15, стр. 5
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290764 --
+   Название: ООО "Уголок" 9703001438 Yauza place ресторан, Москва г., Подколокольный пер., дом № 16  стр. 4
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290762 --
+   Название: ООО "МЯТА-Д" 9705141335 Мята Lounge ресторан, Москва г., Дубининская ул., дом № 35, этаж 1, пом. 3, ком. 12
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290760 --
+   Название: ИП Костанян Геворг Серёжаевич 503123429575 Огненный фастфуд кафе, Московская обл, Балашиха г., Каширское ш., дом № 82А
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290756 --
+   Название: ООО "Успех" 9714082478 Poetica ресторан, Москва г., Мясницкая ул., дом № 41, с. 3
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290754 --
+   Название: ООО "Кофе В Турке" 5038131474 Турка кафе, Московская обл., Пушкино г., Тарасовка с., Большая Тарасовская ул., дом № 102, помещ. 101
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290752 --
+   Название: ООО "Русалка" 5024256360 Тут Харчо ресторан, Саратовская обл, Саратов г., им Петра Столыпина пр-кт., дом № 31/35
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290750 --
+   Название: ООО "Русалка" 5024256360 Тут Харчо ресторан, Саратовская обл, Саратов г., им Петра Столыпина пр-кт., дом № 10
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290746 --
+   Название: ООО "АЮ" 9714056291 One Chef Studio ресторан, Москва г., Петровка ул., дом № 30/7
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290744 --
+   Название: ООО "Заря" 6000006998 Булгаков бар, Псковская обл, Псков г., Октябрьский пр-кт., дом № 20
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290742 --
+   Название: ООО "Манжо" 7734732699 Лобби бар, Москва г., Ленинградский пр-кт., дом № 31А
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290740 --
+   Название: ИП Дебелов Артём Евгеньевич 280705744083  Why Not Sushi ресторан, Москва г., Осенняя ул., дом № 23
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290738 --
+   Название: ИП Аветисян Инесса Арменовна 237304096510 Старик Хинкалыч ресторан, Пермский край, Пермь г., Екатерининская ул., дом № 88
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290736 --
+   Название: ООО "Фудтайм" 9706004130  столовая, Москва г., Ленинский пр-кт., дом № 2/4
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290734 --
+   Название: ИП Грицевская Наталья Саматовна 662201338486 Сушкоф пиццерия, Свердловская обл., Верхняя Салда г., Пролетарская ул., дом № 73
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290732 --
+   Название: ИП Дебелов Артём Евгеньевич 280705744083 Why Not Sushi ресторан, Москва г., Завода Серп и Молот проезд., дом № 5с3
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290730 --
+   Название: ООО "4А" 7203600038 Качаем бар, Тюменская обл, Тюмень г., Челюскинцев ул., дом № 10, 1 эт
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290728 --
+   Название: ИП Балакшин Дмитрий Александрович 290410757809 Why Not Sushi ресторан, Москва г., Варшавское ш., дом № 135Б
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290726 --
+   Название: ООО "ООО Малина" 4312157928 Монако ресторан, Кировская обл, Кирово-Чепецк г., Луговая ул., дом № 15
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290724 --
+   Название: ИП Грицевская Наталья Саматовна 662201338486 Сушкоф пиццерия, Свердловская обл, Каменск-Уральский г., Каменская ул., дом № 82
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290722 --
+   Название: ИП Дебелов Артём Евгеньевич 280705744083  Why Not Sushi ресторан, Москва г., Осенняя ул., дом № 23
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290720 --
+   Название: ООО "Эйтсмо" 5044145757 EIGHT кальянная, Московская обл., Голубое д., Тверецкий проезд., дом № 20А, корп. 1
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290716 --
+   Название: ИП Замесов Роман Александрович 504017322906 Борода бар, Московская обл., Раменское г., Воровского ул., дом № 5
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290714 --
+   Название: ООО "Бирдэкель" 9728044994 Пивница ресторан, Москва г., Профсоюзная ул., дом № 61А
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290712 --
+   Название: ИП Сакиев Ислам Мурадинович 091704362493 Дядя Изя ресторан, Московская обл., Истра г., Черная д., Садовая ул., дом № 38
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290710 --
+   Название: ИП Епремян Арно Каренович 524506910640 Flame кальянная, Москва г., Малая Филевская ул., дом № 13
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290706 --
+   Название: ООО "Бургер Тим" 4706091039 New Haven бар, Ленинградская обл., Мурино г., Шувалова ул., дом № 33/35
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290704 --
+   Название: ИП Бобрышев Олег Николаевич 701707915557 Кондитерская ТАРТА кафе, Санкт-Петербург г., Петровский пр-кт., дом № 22 корпус 2 стр.1 помещение 4Н
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290700 --
+   Название: ИП Коваленко Олеся Евгеньевна 773172995630 Барыня кафе, Московская обл., Сергиев посад г., Вознесенская ул., дом № 25/10  помещение 1
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290698 --
+   Название: ИП Денисова Альбина Владимировна 132436111875 Печка пекарня, Мордовия Респ, Саранск г., Ульянова ул., дом № 93
+   Стадия: C130:WON
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290696 --
+   Название: ООО "Рябчик" 7813684487 Белый Рябчик ресторан, Санкт-Петербург г., Блохина ул., дом № 6/3
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290694 --
+   Название: ИП Денисова Альбина Владимировна 132436111875 Печка пекарня, Мордовия Респ, Саранск г., Ульянова ул., дом № 93
+   Стадия: C126:WON
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290692 --
+   Название: ИП Баудинов Абубакар Аббасович 201501485201 Capl кофейня, Ингушетия Респ, Сунжа г., Суворова ул., дом № 2б, ТЦ «Сийг»
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290690 --
+   Название: ИП Мисирбиев Магомед Исаевич, ИНН 201579455570 Capl кофейня, Ростовская обл, Ростов-на-Дону г., Ворошиловский пр-кт., дом № 37
+   Стадия: C126:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290684 --
+   Название: ООО "Москва-владивосток" 7838130748 Москва-Владивосток ресторан, Санкт-Петербург г., Московский пр-кт., дом № 206, лит. А, пом. 1Н
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290682 --
+   Название: ИП Карпушин Алексей Александрович 575212306326 Comedy Crew Стендап-бар, Татарстан Респ, Казань г., Университетская ул., дом № 14, помещ. 1000
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+   -- Сделка #290678 --
+   Название: ИП Титов Евгений Юрьевич 670402060875 АДМ кафе, Московская обл., Люберцы г., Верхнее Мячково, Взлетная ул., дом № 1
+   Стадия: C130:NEW
+   Компания: N/A
+   Telegram: -
+   Причины ожидания: -
+
+============================================================
+ТЕСТ 4: Поиск сделок на стадии 'WAIT_CUSTOMER_ACTION'
+============================================================
+[INFO] Сделок на стадии 'WAIT_CUSTOMER_ACTION' не найдено
+   Это нормально - создайте тестовую сделку вручную
+
+============================================================
+ТЕСТ 5: Получение полей сделки #290812
+============================================================
+[OK] Поля сделки:
+
+   Основные поля:
+   ID: 290812
+   TITLE: ИП Краснова Анжелика Николаевна 638100111000 Массе кафе, Самарская обл., Сергиевск, Ленина ул., дом № 93а
+   STAGE_ID: C130:NEW
+   DATE_CREATE: 2026-02-26T18:42:38+03:00
+   COMPANY_TITLE: -
+
+   Пользовательские поля:
+   UF_CRM_1760703813: 14346
+   UF_CRM_1760704824311: 
+   UF_CRM_1764795236: 50592
+   UF_CRM_5EDA1E6FBDA43: 
+   UF_CRM_1700231677: 
+   UF_CRM_59B10135DE96A: 0
+   UF_CRM_59B10135EF82F: [0]
+   UF_CRM_59B10136083AF: 
+   UF_CRM_59B101361C947: 
+   UF_CRM_59B101362EEBE: 
+   UF_CRM_59B10136465A6: 
+   UF_CRM_59B10136517C2: 
+   UF_CRM_59B101365D8B3: 
+   UF_CRM_59C0F57887BBA: 
+   UF_CRM_1517213686: 
+   UF_CRM_1517219350: []
+   UF_CRM_1540884925257: 
+   UF_CRM_1540884942396: 0
+   UF_CRM_1540887162: 0
+   UF_CRM_1540887209: 
+   UF_CRM_1540887224: 
+   UF_CRM_1540887249: 
+   UF_CRM_1540887286: 
+   UF_CRM_1540973661218: 
+   UF_CRM_1543415826059: 
+   UF_CRM_1545034298497: 
+   UF_CRM_5C57EB333D917: 
+   UF_CRM_5C57EB33574FB: 
+   UF_CRM_5C57EB3369A66: 
+   UF_CRM_5C875DD081413: 
+   UF_CRM_1554733771: 0
+   UF_CRM_5CB7442F36516: 
+   UF_CRM_1562072876: 
+   UF_CRM_5D88B1B7CB2CD: 0
+   UF_CRM_5D88B1B7EFC54: 0
+   UF_CRM_5DC273CA4FD58: False
+   UF_CRM_5DCAA6A32D821: 
+   UF_CRM_1573562204: 0
+   UF_CRM_1583333017: 0
+   UF_CRM_1586873999094: 
+   UF_CRM_1587032431703: 0
+   UF_CRM_5ED8B2CCCDC13: 
+   UF_CRM_5EDA1E6E3ED6C: 
+   UF_CRM_5EDA1E6E805A9: 
+   UF_CRM_5EDA1E6EACE72: 
+   UF_CRM_5EDA1E6EDE5DD: 
+   UF_CRM_5EDA1E6F203D4: 
+   UF_CRM_5EDA1E6F540B4: 
+   UF_CRM_5EDA1E6F8F85E: 
+   UF_CRM_5EDA1E700DC2D: 
+   UF_CRM_5EDA3F3C5EE21: []
+   UF_CRM_5EE5D56115974: 
+   UF_CRM_5EF063CF2DC8E: 
+   UF_CRM_1599550562: 
+   UF_CRM_5F5795385DC1B: 
+   UF_CRM_5F5B3AD24DDD4: 
+   UF_CRM_5F9D77724BB9A: 
+   UF_CRM_1605172183: 0
+   UF_CRM_1605178091: False
+   UF_CRM_1608827401: False
+   UF_CRM_1608908262: 
+   UF_CRM_5FEDF5C809570: 
+   UF_CRM_5FEDF5C85F8FA: False
+   UF_CRM_5FEDF5C8A52D5: 
+   UF_CRM_5FEDF5C8E6C03: 
+   UF_CRM_5FEDF5C931DD2: 
+   UF_CRM_601914F21E1B9: 
+   UF_CRM_1616075753020: 0
+   UF_CRM_1616075787446: 0
+   UF_CRM_60891968E19AC: 
+   UF_CRM_60C1C9AB139C7: 
+   UF_CRM_60C1C9AB79BE7: 
+   UF_CRM_60C858DFB74C2: 
+   UF_CRM_60EFEFCC49E6F: False
+   UF_CRM_A_W_GROUP_ID: 
+   UF_CRM_612FA6152BD68: 
+   UF_CRM_A_T_GROUP_ID: 
+   UF_CRM_61727F436704F: 
+   UF_CRM_61824BCC7AEBE: 
+   UF_CRM_61825493511E9: 
+   UF_CRM_61AA009F717DE: 
+   UF_CRM_61CAB5EF83D2B: 
+   UF_CRM_61CAB5F020A3E: 
+   UF_CRM_61CAB5F0AB148: 
+   UF_CRM_61CAB5F13D0CB: 
+   UF_CRM_62051EA9D21F1: 
+   UF_CRM_1655904602538: 
+   UF_CRM_1659349413081: 
+   UF_CRM_1659361453453: 
+   UF_CRM_1659364891780: 
+   UF_CRM_1659615465221: 
+   UF_CRM_635283D300EAE: 
+   UF_CRM_63623B333A578: 
+   UF_CRM_1677843077183: 
+   UF_CRM_6401E54627B6A: 
+   UF_CRM_6401E5472C11C: 
+   UF_CRM_1678708522711: 
+   UF_CRM_640F2F62B6628: False
+   UF_CRM_6419C040AC4AC: 
+   UF_CRM_1682435712065: 
+   UF_CRM_645E0E1909302: 
+   UF_CRM_1684245971886: 
+   UF_CRM_646393F389B94: 
+   UF_CRM_1684312028704: 
+   UF_CRM_1686231090348: 
+   UF_CRM_1686231207466: 
+   UF_CRM_6487315F680E9: 
+   UF_CRM_1686825230: 
+   UF_CRM_649BEFEC19D8A: 
+   UF_CRM_1690789002: 0
+   UF_CRM_1691670770528: 
+   UF_CRM_1695905067817: 
+   UF_CRM_1700226945: 
+   UF_CRM_656A26F7895DA: 
+   UF_CRM_6571A8CDEA4D2: 
+   UF_CRM_658163E6583E3: 
+   UF_CRM_658163E66B0C5: 
+   UF_CRM_6581AD0036289: 
+   UF_CRM_6581B5625B088: 
+   UF_CRM_6589734F4800C: 
+   UF_CRM_1705408741: []
+   UF_CRM_65B374979E586: 
+   UF_CRM_65B37497B6722: 
+   UF_CRM_65B37497C3755: 
+   UF_CRM_65B37CE029736: 
+   UF_CRM_65B383B4E4C1E: 
+   UF_CRM_65B383B4F36C5: 
+   UF_CRM_65B383B50B906: 
+   UF_CRM_65B38F20C8036: 
+   UF_CRM_65B38F20D805B: []
+   UF_CRM_65B38F20E496A: []
+   UF_CRM_65B612C5A7373: 
+   UF_CRM_65C0A100E1AE2: 
+   UF_CRM_65C0A100F1071: 
+   UF_CRM_65C0A1010B6FF: 
+   UF_CRM_65C0A1011B252: 
+   UF_CRM_65C0A10127664: 
+   UF_CRM_65D578A43C8F2: 
+   UF_CRM_65D5F1CF38DC7: 
+   UF_CRM_65DC3D03BBAF0: 
+   UF_CRM_65DF5C02D7AD3: 
+   UF_CRM_65E0888E28FC7: 
+   UF_CRM_65E0888E3F6AB: 
+   UF_CRM_65E0888E4CC6B: 
+   UF_CRM_1709279548: 
+   UF_CRM_65E18A2819B89: 
+   UF_CRM_1709556641: 
+   UF_CRM_1709558659: 
+   UF_CRM_65E63FB4B582A: 
+   UF_CRM_65E63FB4C4FD7: 
+   UF_CRM_65E836EB51F88: 
+   UF_CRM_65E8696002DDD: 
+   UF_CRM_65EEEE81A0E0E: 
+   UF_CRM_1710337552: 
+   UF_CRM_1710406175: 
+   UF_CRM_65F9AB84DA720: 
+   UF_CRM_65FA7341E691F: 
+   UF_CRM_65FA9D2E56192: 
+   UF_CRM_65FA9D2E6481C: 
+   UF_CRM_65FAA3134F307: 
+   UF_CRM_65FAA7AA14D7A: 
+   UF_CRM_65FAD434D7540: 
+   UF_CRM_65FAD434EA72E: 
+   UF_CRM_65FAD43504681: 
+   UF_CRM_65FAD4352AEDE: 
+   UF_CRM_65FBFFA734C2F: 
+   UF_CRM_6609FCD59B664: 
+   UF_CRM_6609FCD5AAD84: 
+   UF_CRM_1712142980: Да
+   UF_CRM_YA_CID: 
+   UF_CRM_YA_COUNTER_ID: 
+   UF_CRM_YA_COST_FIELD_NAME: 
+   UF_CRM_660DE72BB1C82: 
+   UF_CRM_660DE72BC1CDD: 
+   UF_CRM_660FBD6328A65: 
+   UF_CRM_66165C020A494: 
+   UF_CRM_1712846255685: 
+   UF_CRM_CUST_LTIME: 
+   UF_CRM_6622755A85067: 
+   UF_CRM_662275E56A7E9: 
+   UF_CRM_6627D027B9FA8: 
+   UF_CRM_66282FC908CFF: 
+   UF_CRM_6628F6EC21AF3: 
+   UF_CRM_6628F95AEB6D9: 
+   UF_CRM_6628F95B084E3: 
+   UF_CRM_6628F95B17D27: 
+   UF_CRM_1714038623: 
+   UF_CRM_1714038697: 
+   UF_CRM_1714130292: 
+   UF_CRM_1714130413: 
+   UF_CRM_1714139799: 
+   UF_CRM_1714727350: 
+   UF_CRM_1714727369: 
+   UF_CRM_1714727380: 
+   UF_CRM_1714727390: 
+   UF_CRM_1714727400: 
+   UF_CRM_1714727408: 
+   UF_CRM_1714730547: 0
+   UF_CRM_1714730595: 
+   UF_CRM_1715693740: 638100111000
+   UF_CRM_1715695447: 
+   UF_CRM_664B3D8753EC3: 
+   UF_CRM_664B43DF77EF0: 
+   UF_CRM_664C5F25F3E9B: 
+   UF_CRM_664C5F263620A: 
+   UF_CRM_1716295691: 
+   UF_CRM_664CA702BCA6E: 
+   UF_CRM_664CA702D1572: 0
+   UF_CRM_664CB7BE20741: 
+   UF_CRM_664F299C7559E: 
+   UF_CRM_664F2C8E4FBF1: 
+   UF_CRM_664F370A32C39: 
+   UF_CRM_664F3D73DE42B: 0
+   UF_CRM_664F3E077EBBE: 
+   UF_CRM_1716496405: 
+   UF_CRM_664FD676CDC2D: 
+   UF_CRM_664FD676DDC72: 
+   UF_CRM_664FD676F40C9: 
+   UF_CRM_1716764219: 
+   UF_CRM_665488EF13407: 
+   UF_CRM_66595CBD930CD: 
+   UF_CRM_66595CBDB14AC: 0
+   UF_CRM_66595CBDC7CD3: 0
+   UF_CRM_66595CBDE45DE: []
+   UF_CRM_66595CBE08441: []
+   UF_CRM_66595CBE1DB6D: 
+   UF_CRM_66595CBE33834: 
+   UF_CRM_66595CBE47AEE: []
+   UF_CRM_66595CBE5B6E2: []
+   UF_CRM_66595CBE72DDE: []
+   UF_CRM_66595CBE89E11: []
+   UF_CRM_66595CBEA01E1: []
+   UF_CRM_66595CBEBFDB2: []
+   UF_CRM_66595CBED5349: 
+   UF_CRM_66595CBF1A92B: 
+   UF_CRM_1717155483: 
+   UF_CRM_666C450A09EFF: 
+   UF_CRM_666C450A25304: 0
+   UF_CRM_1719410124983: 
+   UF_CRM_667C986FE7C6B: 
+   UF_CRM_6687B9132DA9F: 
+   UF_CRM_1720426731: 
+   UF_CRM_668E4E7428EA6: 
+   UF_CRM_1721218293779: 
+   UF_CRM_6699944CC9F5C: 
+   UF_CRM_1722943643: False
+   UF_CRM_66C5E2C9E1AAE: 5444
+   UF_CRM_66C5E56D1390D: 
+   UF_CRM_1724251810: 0
+   UF_CRM_66CC75AA6CB74: 
+   UF_CRM_66CC75AF0372A: 0
+   UF_CRM_66F2D32875A90: 
+   UF_CRM_670D3233843D3: 
+   UF_CRM_1729161544: 0
+   UF_CRM_6716135B85392: 
+   UF_CRM_671613632D412: 
+   UF_CRM_67161367F229D: 
+   UF_CRM_6716136B0F244: 
+   UF_CRM_67161372F3134: 
+   UF_CRM_6716137AE2746: 
+   UF_CRM_6716137E6531E: 
+   UF_CRM_67161382D6B1C: 
+   UF_CRM_6716138AA9587: 
+   UF_CRM_6716139246582: 
+   UF_CRM_6716139A1FEA1: 
+   UF_CRM_671613A17F053: 
+   UF_CRM_671613A6748CD: 
+   UF_CRM_671613A8F405A: 
+   UF_CRM_671613B0973EE: 
+   UF_CRM_671613B7E3C96: 
+   UF_CRM_671613BF1EE86: 
+   UF_CRM_671613C68C50D: 
+   UF_CRM_671613CDD363D: 
+   UF_CRM_671613D2B84AE: 
+   UF_CRM_671650E782A1A: 
+   UF_CRM_671658E3088BC: 
+   UF_CRM_6722245FA24AB: 
+   UF_CRM_1730457786: 
+   UF_CRM_1730457790: 
+   UF_CRM_1730540306412: 
+   UF_CRM_1732474555: Массе кафе, Самарская обл., Сергиевск, Ленина ул., дом № 93а
+   UF_CRM_1732474570: 
+   UF_CRM_1732474590: 
+   UF_CRM_1732474607: 
+   UF_CRM_1732474623: 
+   UF_CRM_1732474640: 
+   UF_CRM_1732474658: 
+   UF_CRM_1732474682: 
+   UF_CRM_1732474703: 
+   UF_CRM_1732474744: 
+   UF_CRM_1732474764: 
+   UF_CRM_1732474781: 
+   UF_CRM_1732474815: 
+   UF_CRM_1732474831: 
+   UF_CRM_1732474907: 
+   UF_CRM_1732475898: 
+   UF_CRM_675446F7CB2F0: False
+   UF_CRM_1733582755: 0
+   UF_CRM_1734084551769: 
+   UF_CRM_1734355909: 
+   UF_CRM_1734355989: 
+   UF_CRM_1734356223: 
+   UF_CRM_1734356240: 
+   UF_CRM_1734420690: 
+   UF_CRM_1734421007: 
+   UF_CRM_1734842922: 
+   UF_CRM_1734844761: 0
+   UF_CRM_1734845748: 
+   UF_CRM_1734848178: 
+   UF_CRM_1735051934620: 
+   UF_CRM_1735219082621: 
+   UF_CRM_1736525147278: 
+   UF_CRM_1736857211: 
+   UF_CRM_67865AC51F26E: 
+   UF_CRM_1737117653391: 
+   UF_CRM_678E37CE31B8B: 0
+   UF_CRM_678F6B9AA9088: 
+   UF_CRM_1737479942723: 
+   UF_CRM_6791FBEB4CCED: 
+   UF_CRM_67923D4480778: 
+   UF_CRM_1737637965: 
+   UF_CRM_1737712128: 
+   UF_CRM_1737712416: 
+   UF_CRM_67975AD69AED9: 
+   UF_CRM_67978BA1A8DB1: 
+   UF_CRM_1738055969: 0
+   UF_CRM_1738199632098: 
+   UF_CRM_67A099C44190E: 0
+   UF_CRM_1738829223755: 
+   UF_CRM_1738843464888: 
+   UF_CRM_1738849780: 
+   UF_CRM_REQUIREDFIELDELEMENT: 
+   UF_CRM_1739533901494: 
+   UF_CRM_1740140895258: False
+   UF_CRM_67BC63168C232: 
+   UF_CRM_1740407618932: 
+   UF_CRM_67BD9DA4C8560: 
+   UF_CRM_FX_CONVERSION: 
+   UF_CRM_67CAB15F3BA86: 
+   UF_CRM_67CEE07BB93BD: 
+   UF_CRM_67D1805EC435D: 
+   UF_CRM_67D18065D0069: 
+   UF_CRM_67D181EC0E0C3: 
+   UF_CRM_1742375640: False
+   UF_CRM_67E0DAD62EA1E: 
+   UF_CRM_67E0DADDBD5B9: 
+   UF_CRM_67E5134A907C2: 
+   UF_CRM_67F3C4A5464B6: 
+   UF_CRM_67F61E4C75964: 
+   UF_CRM_67F66F95219D7: 
+   UF_CRM_1744877210: 
+   UF_CRM_6808A0AC0E532: 
+   UF_CRM_6808A0B4DCD75: 
+   UF_CRM_6808A0BEDED6B: 
+   UF_CRM_6808A0C92D367: 
+   UF_CRM_6808A0D3BD893: 
+   UF_CRM_6808A0D8C640D: 
+   UF_CRM_6808A0DDD0A28: 
+   UF_CRM_6808A0E7155CC: 
+   UF_CRM_6808A0E7DDB8A: 
+   UF_CRM_6808A2A86C8EE: 
+   UF_CRM_1745850875: 0
+   UF_CRM_1747224353: 
+   UF_CRM_682DE439B908A: 
+   UF_CRM_68302E2A32632: []
+   UF_CRM_683851746E8C0: 
+   UF_CRM_6853D3C394B0F: 
+   UF_CRM_1750838640208: 
+   UF_CRM_685E2E0D30F4A: 
+   UF_CRM_68628DFE3ED69: 
+   UF_CRM_6867A630EE512: 
+   UF_CRM_6878F6D568CFB: 
+   UF_CRM_6882329757225: 
+   UF_CRM_6882329E53B2A: 
+   UF_CRM_688782DDD0A20: 
+   UF_CRM_68886A6FDDA0F: 
+   UF_CRM_1754048481: 
+   UF_CRM_1754048864: 
+   UF_CRM_1754049000: 
+   UF_CRM_1754050340: 
+   UF_CRM_688CAF2DAFA71: 
+   UF_CRM_688CAF3BAD1E6: 
+   UF_CRM_1754050399: 
+   UF_CRM_1754050504: 
+   UF_CRM_1756382987: 
+   UF_CRM_68B048ED90652: 1
+   UF_CRM_1756985449: 
+   UF_CRM_1756985555: 
+   UF_CRM_1756986802: 
+   UF_CRM_1757918283: 
+   UF_CRM_1757918321: 
+   UF_CRM_68C7B57A5D1D8: 
+   UF_CRM_68C7B58585A17: 
+   UF_CRM_68C7B586451A8: 
+   UF_CRM_68C7B5908870F: 
+   UF_CRM_68C7B66385F1D: 
+   UF_CRM_68C7B66B73DDA: 
+   UF_CRM_CUST_INNTIME: 
+   UF_CRM_1758281982: 
+   UF_CRM_1758282015: 
+   UF_CRM_68D258F1529D8: 
+   UF_CRM_1758714707: 
+   UF_CRM_1758714979249: 
+   UF_CRM_1758715045497: 
+   UF_CRM_1758715250817: 
+   UF_CRM_1758715722909: []
+   UF_CRM_1758715989848: 
+   UF_CRM_1758890816820: 
+   UF_CRM_68DA6FFF9BCD9: 
+   UF_CRM_68DBCFCD00510: 
+   UF_CRM_68E4D6DE51146: 0
+   UF_CRM_68E4D7E5B19B4: 
+   UF_CRM_68E4D7EB2969A: 
+   UF_CRM_CHATAPP_DIALOG: 
+   UF_CRM_68E76C79A16F4: 
+   UF_CRM_1760601636194: 
+   UF_CRM_68F0D597E7550: 0
+   UF_CRM_68F0D5A533451: 0
+   UF_CRM_68F0DE52CAB68: 
+   UF_CRM_68F0DE5C18964: 
+   UF_CRM_1760699774767: 0
+   UF_CRM_68F72DDB2E317: 
+   UF_CRM_68F72DDDD5461: 
+   UF_CRM_68FFA2E6004B6: 
+   UF_CRM_69043D9BBC104: 
+   UF_CRM_69171A59A5016: 
+   UF_CRM_69171A9F5D034: 
+   UF_CRM_69171E0DB5261: 
+   UF_CRM_69171E19C12B9: 
+   UF_CRM_691725BC2D5E4: 0
+   UF_CRM_6917263F150C8: ИП Краснова Анжелика Николаевна
+   UF_CRM_1763372859983: 
+   UF_CRM_691B2B632C403: 
+   UF_CRM_LAST_COMMUNICATION: 
+   UF_CRM_1763475624946: 
+   UF_CRM_1763547764661: 
+   UF_CRM_1763576219: 0
+   UF_CRM_1764078698439: False
+   UF_CRM_1764078723297: 
+   UF_CRM_1764078773360: False
+   UF_CRM_1764078823812: False
+   UF_CRM_1764078924688: False
+   UF_CRM_1764078979548: 
+   UF_CRM_1764079031372: False
+   UF_CRM_1764079081767: 
+   UF_CRM_1764168379: 
+   UF_CRM_1764586854461: False
+   UF_CRM_1764586973510: 0
+   UF_CRM_692EF66B7710C: 
+   UF_CRM_692EFC8D77DED: 
+   UF_CRM_1764751173292: 0
+   UF_CRM_6930884F58384: 
+   UF_CRM_6930885843840: 
+   UF_CRM_1764795100272: 0
+   UF_CRM_1764795134273: +7 937 173 4265
+   UF_CRM_1764795159219: Анжелика 
+   UF_CRM_1764795189054: angelik_1971@mail.ru
+   UF_CRM_1764795318: 27368
+   UF_CRM_1764795410902: Накладные, ЮЗЭДО, Маркировка
+   UF_CRM_1764795524663: 40802810454400012343
+   UF_CRM_1764795906445: 043601607
+   UF_CRM_1764796819587: 0
+   UF_CRM_1764796842908: 0
+   UF_CRM_1764796867272: 0
+   UF_CRM_1764796887443: 
+   UF_CRM_1764837910: 15380
+   UF_CRM_1764838201: 
+   UF_CRM_1764841116: 0
+   UF_CRM_1764863050548: 14346
+   UF_CRM_1764865746147: 
+   UF_CRM_1764866261903: 15380
+   UF_CRM_1765174539822: 
+   UF_CRM_6936ED4025232: 
+   UF_CRM_6936ED4C43587: 
+   UF_CRM_6936ED58570BA: 
+   UF_CRM_1765277991798: 
+   UF_CRM_1765369026813: 
+   UF_CRM_1765369070484: 
+   UF_CRM_1765369254733: 
+   UF_CRM_1765581166505: 
+   UF_CRM_1765581203982: 
+   UF_CRM_1765581236732: 
+   UF_CRM_1765890508330: 
+   UF_CRM_1765890546644: 
+   UF_CRM_1765890577676: 
+   UF_CRM_1765890606327: 
+   UF_CRM_1766735072819: 
+   UF_CRM_1766744488584: 
+   UF_CRM_1766744756169: 
+   UF_CRM_1766995687443: 
+   UF_CRM_1766995754453: 
+   UF_CRM_1766995791351: 
+   UF_CRM_1766995823750: 
+   UF_CRM_1766996697381: 
+   UF_CRM_6953CF7F6A25E: 
+   UF_CRM_6953CF8B54E1B: 
+   UF_CRM_6953CF98BEB69: 
+   UF_CRM_6953CFA767BC5: 
+   UF_CRM_6953CFA7BCF99: 
+   UF_CRM_6953CFB5C8F21: 
+   UF_CRM_6953CFC3F2405: 
+   UF_CRM_1768376326261: 
+   UF_CRM_1768462833987: 
+   UF_CRM_1768462864270: 
+   UF_CRM_1768568296: 
+   UF_CRM_1768569247: 
+   UF_CRM_69735161748F6: 
+   UF_CRM_697351731FAD3: 
+   UF_CRM_6973518543A4E: 
+   UF_CRM_69735197600B7: 
+   UF_CRM_697351A0DFD28: 
+   UF_CRM_69735D66E9311: 
+   UF_CRM_1769172718507: 
+   UF_CRM_1769172751955: 
+   UF_CRM_1769172779836: 
+   UF_CRM_1769172807105: 
+   UF_CRM_1769172844488: 
+   UF_CRM_1769172873807: 
+   UF_CRM_69848DE0B3AF5: 
+   UF_CRM_6985D30BECE8E: 
+   UF_CRM_6985D3186B8A5: 
+   UF_CRM_698F2CB6B0CBA: 0
+   UF_CRM_MGO_CC_CHANNEL_TYPE: 
+   UF_CRM_MGO_CC_RESULT: 
+   UF_CRM_MGO_CC_ENTRY_POINT: 
+   UF_CRM_MGO_CC_CREATE: 
+   UF_CRM_MGO_CC_END: 
+   UF_CRM_MGO_CC_TAG_ID: 
+   UF_CRM_1772003913: 
+   UF_CRM_1772004190: 
+   UF_CRM_1772004438: 
+   UF_CRM_1772004951: 
+   UF_CRM_1772006346: 
+   UF_CRM_1772006499: []
+   UF_CRM_1772006594: 
+   UF_CRM_1772006751: 
+   UF_CRM_1772006818: 
+   UF_CRM_1772006952: 
+   UF_CRM_1772007003: 
+   UF_CRM_1772007071: 
+   UF_CRM_1772007221: 
+   UF_CRM_1772007289: 
+   UF_CRM_1772007440: 
+   UF_CRM_1772007537: False
+   UF_CRM_1772007575: 
+   UF_CRM_1772007626: 
+   UF_CRM_1772007748: False
+   UF_CRM_1772007847: 0
+   UF_CRM_1772007906: 0
+   UF_CRM_1772007949: 
+   UF_CRM_699FE2FFA82B5: 
+   UF_CRM_699FE308CC191: 
+   UF_CRM_1686230494085: 
+   UF_CRM_1735053962: 
+   UF_CRM_1735054095: 
+   UF_CRM_1735054256: 
+   UF_CRM_1735054363: 
+   UF_CRM_1735054397: 
+   UF_CRM_1735054433: 
+   UF_CRM_1735054452: 
+   UF_CRM_1735054667: 
+   UF_CRM_1735219355: 
+   UF_CRM_1736428188: 
+   UF_CRM_1736428222: 0
+   UF_CRM_1647523340: 
+   UF_CRM_1652680116812: []
+   UF_CRM_1647603603: 
+   UF_CRM_661523FB9A655: 
+   UF_CRM_664FD6770E9F6: []
+   UF_CRM_664FD6771B71F: 0
+   UF_CRM_664FD67728CF0: []
+   UF_CRM_664FD67735911: 
+   UF_CRM_664FD677439C2: 
+   UF_CRM_664FD67751287: 
+   UF_CRM_664FD6775E16D: 
+   UF_CRM_664FD6776D0CC: 
+   UF_CRM_664FD67779CA4: 
+   UF_CRM_664FD6778B638: 
+   UF_CRM_664FD6779A27C: 
+   UF_CRM_664FD677A7657: 0
+   UF_CRM_664FD677B7FD5: 
+   UF_CRM_664FD677C61CB: 
+   UF_CRM_664FD677DD206: 
+   UF_CRM_664FD677F3EF4: 
+   UF_CRM_664FD67810A3C: 
+   UF_CRM_66540FAC32793: 
+   UF_CRM_66540FAC47EB4: 
+   UF_CRM_66540FAC56F4D: 
+   UF_CRM_66595CBF3114D: 
+   UF_CRM_66595CBF5CBE8: 
+   UF_CRM_66595CBF70D6C: 
+   UF_CRM_66595CBF861C1: False
+   UF_CRM_66595CC507331: 
+   UF_CRM_6659B71BB905B: 0
+   UF_CRM_66630ADB0FD4D: 
+   UF_CRM_669FA1C1BFB29: 
+   UF_CRM_66DAD9A9B76D6: 
+   UF_CRM_DEAL_AMO_CCUAEOEUZRUJQAWP: 
+   UF_CRM_DEAL_AMO_BJZBJNFOEPKXKUKL: 
+   UF_CRM_DEAL_AMO_SOIJOIUEONZSRIRW: 
+   UF_CRM_DEAL_AMO_FWJBANAHFGFRDNNL: 
+   UF_CRM_DEAL_AMO_SOMEVSXVGBAAMYOK: 
+   UF_CRM_DEAL_AMO_BDUXLUWHSFSMJJGE: 
+   UF_CRM_DEAL_AMO_TTINLNBVTBWAZOFM: 
+   UF_CRM_DEAL_AMOID: 
+   UF_CRM_MGO_CC_ENTRY_ID: 
+   UF_CRM_DEAL_AMO_CKTFZWKJXFXCHXJB: 
+   UF_CRM_DEAL_AMO_UVJVPIAELSXMOYAT: 
+   UF_CRM_DEAL_AMO_ARKOEKAETVJRTVYD: 
+   UF_CRM_DEAL_AMO_MARBFROIBDJKSGLA: 
+   UF_CRM_66DAD9A99333E: 
+   UF_CRM_DEAL_AMO_NSHHPISQWFBJCTVF: 
+   UF_CRM_DEAL_AMO_CSFNSIEWENBUIMTP: 
+   UF_CRM_DEAL_AMO_KLJRKJBZDSVHLZYX: 
+   UF_CRM_DEAL_AMO_QZGCTSGPHIJHEBPF: 
+   UF_CRM_DEAL_AMO_VYSNLGJSIEOSYYIL: 
+   UF_CRM_DEAL_AMO_HCPVBMJXBPKVKEEX: 
+   UF_CRM_DEAL_AMO_HYENMKKVZYBIBJTN: 
+   UF_CRM_DEAL_AMO_VUGGNUQQJRQNBCPB: 
+   UF_CRM_DEAL_AMO_FGRQYXQYLXPOAFII: 
+   UF_CRM_66DAD9A9DD1EC: 
+   UF_CRM_66DAD9A9CB3DE: 
+   UF_CRM_66D698DA6464A: 
+   UF_CRM_66D698DA928F0: 
+   UF_CRM_66D698DA842AE: 
+   UF_CRM_66D698DAA0A5F: 
+   UF_CRM_66D83C3EE856F: 
+   UF_CRM_66D698DA74AF7: 
+   UF_CRM_66D698DA55418: 
+   UF_CRM_66D698DA46A30: 
+   UF_CRM_DEAL_AMO_MRJKALQOFRHMCSWE: 
+   UF_CRM_DEAL_AMO_UMZXOLZYQOJVEIDO: 
+   UF_CRM_DEAL_AMO_ZMCLSIQGSMQJDEIJ: 
+   UF_CRM_DEAL_AMO_GGRPMPWNIFOZOWRY: 
+   UF_CRM_DEAL_AMO_HEYGIYSHWKDJHGXB: 
+   UF_CRM_DEAL_AMO_XDZOSIAVYWXPWKXC: 
+   UF_CRM_66DAD9A9A75F1: 
+   UF_CRM_DEAL_AMO_HXBUQKFWMAMVNVXF: 
+   UF_CRM_DEAL_AMO_COKQTUZBGFSYFMNE: 
+   UF_CRM_DEAL_AMO_VAZPIHLQNJTZHBLO: 
+   UF_CRM_DEAL_AMO_XHSQJUOZWOYIDUCN: 
+   UF_CRM_DEAL_AMO_PVBLFETKCTIVMGAG: 
+   UF_CRM_DEAL_AMO_HNZHRVJBMAPYZPJD: 
+   UF_CRM_DEAL_AMO_FTFTSBPMEFZCDZVF: 
+   UF_CRM_DEAL_AMO_FARPOAKHUZRBLHXI: 
+   UF_CRM_DEAL_AMO_QIGAIOKPQZJAQVRS: 
+   UF_CRM_DEAL_AMO_QOIYAQPCNOHZJXAU: 
+   UF_CRM_DEAL_AMO_YSYQUIWTWTAOEEYT: 
+   UF_CRM_DEAL_AMO_UDLXBHHMJDDGIHBB: 
+   UF_CRM_DEAL_AMO_JCGSHDWHRVUHIERI: 
+   UF_CRM_DEAL_AMO_VSAHKOEOKNDVJUTH: 
+   UF_CRM_DEAL_AMO_WUJEBOXCNGXSXKBF: 
+   UF_CRM_DEAL_AMO_JFFOPUHYAYQEPDDW: 
+   UF_CRM_ROISTAT: 
+   UF_CRM_DEAL_AMO_ZVPINFBEQNHBYTMN: 
+   UF_CRM_DEAL_AMO_KMYIYCPBNOETRUDH: 
+   UF_CRM_66D698DA0228E: 
+   UF_CRM_DEAL_AMO_QNGHXILQBPQRRHVB: 
+   UF_CRM_DEAL_AMO_DIYNDXBBRDDSRYMD: 
+   UF_CRM_DEAL_AMO_WFAXWBLDRQVOSEIR: 
+   UF_CRM_DEAL_AMO_CKRPGMPPBMIRDWSF: 
+   UF_CRM_DEAL_AMO_TCPTOUMIGLWWOKCZ: False
+   UF_CRM_1725998047: 
+   UF_CRM_1725956404: 
+   UF_CRM_DEAL_AMO_LLEZLTRLHJUICYLK: 
+   UF_CRM_DCT_CID: 
+   UF_CRM_DEAL_AMO_JFETIYXGGGMWRQAX: 
+   UF_CRM_DCT_UID: 
+   UF_CRM_DEAL_AMO_PTBWAUOUZYMOVGLG: 
+   UF_CRM_DCT_SID: 
+   UF_CRM_DEAL_AMO_CVCGSSYNHCIKQGWY: 
+   UF_CRM_DCT_YA_CID: 
+   UF_CRM_DEAL_AMO_BYYYAANIVTFWZPEX: 
+   UF_CRM_DCT_DURATION: 
+   UF_CRM_DEAL_AMO_RAFGUTCZPSBPRVHX: 
+   UF_CRM_DCT_CITY: 
+   UF_CRM_DEAL_AMO_AMHGXWVCOEOOFQGO: 
+   UF_CRM_DCT_WID_NAME: 
+   UF_CRM_DEAL_AMO_GVUQSJLVSEHSNBQX: 
+   UF_CRM_DCT_SOURCE: 
+   UF_CRM_6703C501E3770: 
+   UF_CRM_6703C6FE578F2: 
+   UF_CRM_674EB80E2DB0C: 
+   UF_CRM_678F6BA0DDED6: 
+   UF_CRM_678F6BD192F23: 
+   UF_CRM_678F6BD8DA64D: 
+   UF_CRM_EMAIL_MAILING: 
+   UF_CRM_FULL_ADDRESS: 
+   UF_CRM_BIRTHDATE: 
+   UF_CRM_POST: 
+   UF_CRM_PHONE_HOME: 
+   UF_CRM_STATUS_DESCRIPTION: 
+   UF_CRM_EMAIL_OTHER: 
+   UF_CRM_IM_OTHER: 
+   UF_CRM_WEB_OTHER: 
+   UF_CRM_PHONE_OTHER: 
+   UF_CRM_NAME: 
+   UF_CRM_ADDRESS_2: 
+   UF_CRM_IM_INSTAGRAM: 
+   UF_CRM_IM_FACEBOOK: 
+   UF_CRM_IM_ICQ: 
+   UF_CRM_IM_JABBER: 
+   UF_CRM_IM_MSN: 
+   UF_CRM_IM_SKYPE: 
+   UF_CRM_IM_TELEGRAM: 
+   UF_CRM_IM_VIBER: 
+   UF_CRM_IM_BITRIX24: 
+   UF_CRM_IM_VK: 
+   UF_CRM_IM_IMOL: 
+   UF_CRM_WEB_WORK: 
+   UF_CRM_WEB_HOME: 
+   UF_CRM_WEB_TWITTER: 
+   UF_CRM_PHONE_MOBILE: 
+   UF_CRM_COMPANY_TITLE: 
+   UF_CRM_ADDRESS_CITY: 
+   UF_CRM_PHONE_PAGER: 
+   UF_CRM_PHONE_FAX: 
+   UF_CRM_HONORIFIC: 
+   UF_CRM_IM_OPENLINE: 
+   UF_CRM_SECOND_NAME: 
+   UF_CRM_ADDRESS_POSTAL_CODE: 
+   UF_CRM_EMAIL_WORK: 
+   UF_CRM_PHONE_WORK: 
+   UF_CRM_ADDRESS_REGION: 
+   UF_CRM_ADDRESS_PROVINCE: 
+   UF_CRM_LINK_USER: 
+   UF_CRM_ADDRESS_COUNTRY: 
+   UF_CRM_WEB_FACEBOOK: 
+   UF_CRM_WEB_LIVEJOURNAL: 
+   UF_CRM_WEB_VK: 
+   UF_CRM_PHONE_MAILING: 
+   UF_CRM_ADDRESS: 
+   UF_CRM_LAST_NAME: 
+   UF_CRM_EMAIL_HOME: 
+   UF_CRM_STATUS_ID: 
+   UF_CRM_CRTQST_UID: []
+   UF_CRM_1712183834: 
+   UF_CRM_PERSON_ID: 
+   UF_CRM_VISITOR_ID: []
+   UF_CRM_ADRES: 
+   UF_CRM_CHECKBOX: 
+   UF_CRM_COOKIES: 
+   UF_CRM_ESTLIUVASKLYU: 
+   UF_CRM_HOLIDAY: 
+   UF_CRM_HOWMANYPEOPLE: 
+   UF_CRM_INN: 
+   UF_CRM_INPUT: 
+   UF_CRM_KAKIEPRODUKTI: 
+   UF_CRM_MONEY: 
+   UF_CRM_NAME2: 
+   UF_CRM_ORGANIZATSIYA: 
+   UF_CRM_ROISTATURL: 
+   UF_CRM_SELECTBOX: 
+   UF_CRM_SOPROVODITELN: 
+   UF_CRM_TEXTAREA: 
+   UF_CRM_TIME: 
+   UF_CRM_TRANID: 
+   UF_CRM_UTMREFERRER: 
+   UF_CRM_UZHEISPOLZUET: 
+   UF_CRM_VASHAROL: 
+   UF_CRM_VASHAUCHETNAY: 
+   UF_CRM_VIBERITEVAKAN: 
+   UF_CRM_VKAKOIUCHETNO: 
+   UF_CRM_YOURPRICELIST: 
+   UF_CRM_ZAREGISTRIROV: 
+   UF_CRM_1667377023961: 
+   UF_CRM_LEAD_UTM: 
+   UF_CRM_GS_LF_COMPANY: []
+   UF_CRM_GS_LF_CONTACT: []
+   UF_CRM_4_LF_CLOSE: 
+   UF_CRM_GS_LEAD_FIX: 0
+   UF_CRM_4_LF_DEAL: 
+   UF_CRM_LEAD_FIX4_NOT: 0
+   UF_CRM_4_LF_LEAD_NOT: []
+   UF_CRM_4_LF_DEAL_NOT: []
+   UF_CRM_4_LF_LEAD_OPN: []
+   UF_CRM_4_LF_DEAL_OPN: []
+   UF_CRM_4_LF_LEAD: 
+   UF_CRM_4_LF_DAYS: 
+   UF_CRM_4_LF_LEAD_SUC: []
+   UF_CRM_4_LF_DEAL_SUC: []
+   UF_CRM_4_TF_GA: 
+   UF_CRM_4_TF_YM_REQ: 
+   UF_CRM_4_TF_YM_D: 
+   UF_CRM_4_TF_YM_UID: 
+   UF_CRM_T_IP: 
+   UF_CRM_1709717205: 
+   UF_CRM_1599550541: 
+   UF_CRM_1730289241: 
+   UF_CRM_1730289244: 
+   UF_CRM_1709279752: 
+   UF_CRM_6811D6044F3E4: 
+   UF_CRM_6811D60C5F5D8: 
+   UF_CRM_6811D615B832A: 
+   UF_CRM_6811D61F08EAE: 
+   UF_CRM_6811D627E84FE: 
+   UF_CRM_6811D63117968: 
+   UF_CRM_6811D63AA4921: 
+   UF_CRM_6811D64411E54: 
+   UF_CRM_68302E326A47F: False
+   UF_CRM_68302E57C5070: 
+   UF_CRM_6863C54B5E791: 
+   UF_CRM_68839AAD17ACE: 
+   UF_CRM_LINKOFBILL: 
+   UF_CRM_688CAF483E31B: 
+   UF_CRM_68B05722BB9EE: 
+   UF_CRM_68B14326BBC11: 
+   UF_CRM_68EF916469A29: 
+   UF_CRM_691C66844BD5F: 
+   UF_CRM_ADD_COMMENT: 
+   UF_CRM_TEXT_COMMENT: 
+   UF_CRM_NO_ACTIVYTY: 0
+   UF_CRM_6994717A8B2AB: 
+   UF_CRM_699E92DA8FF87: 
+   UF_CRM_1721994522: 
+   UF_CRM_1721994955: 
+   UF_CRM_667D3AD8DD7D5: 
+   UF_CRM_1724319482: False
+   UF_CRM_5ED9FAA3418D9: 
+   UF_CRM_6571ACA422E39: 
+   UF_CRM_6571ACA438AEB: 
+   UF_CRM_6571ACA447B94: 
+   UF_CRM_6571ACA4568B3: 
+   UF_CRM_67D180667723C: 
+   UF_CRM_67D1806F02157: 
+   UF_CRM_67D180719FAC8: 
+   UF_CRM_67D180777646F: 
+   UF_CRM_67D180794338B: 
+   UF_CRM_67D1807FDFCB6: 
+   UF_CRM_67D18088F0D26: 
+   UF_CRM_67D1808FEE5F0: 
+   UF_CRM_67D1809150918: 
+   UF_CRM_67D1809A6DCE8: 
+   UF_CRM_67D180A3114AF: 
+   UF_CRM_67D180ACB5DA8: 
+   UF_CRM_67D180B5DFCEF: 
+   UF_CRM_67D180BEE0219: 
+   UF_CRM_67D180C98EB4F: 
+   UF_CRM_67D180D3203FC: 
+   UF_CRM_67D180DC9BB99: 
+   UF_CRM_67D180E5A6F25: 
+   UF_CRM_67D180EE9F19D: 
+   UF_CRM_67D180F848EE8: 
+   UF_CRM_67D1810162896: 
+   UF_CRM_67D1810B60A83: 
+   UF_CRM_67D1811523A51: 
+   UF_CRM_67D18167157B0: 
+   UF_CRM_67D18170AE769: 
+   UF_CRM_67D181F461036: 
+   UF_CRM_1756383579: 
+
+============================================================
+ТЕСТ 6: Проверка пользовательских полей
+============================================================
+[OK] Всего пользовательских полей: 859
+
+   Нужные поля:
+   [WARN] Telegram чат (UF_CRM_TELEGRAM_CHAT) - НЕ НАЙДЕНО
+      Нужно создать в настройках CRM
+   [WARN] Причины ожидания (UF_CRM_WAIT_REASONS) - НЕ НАЙДЕНО
+      Нужно создать в настройках CRM
+   [WARN] Продукты (UF_CRM_PRODUCTS) - НЕ НАЙДЕНО
+      Нужно создать в настройках CRM
+
+============================================================
+ИТОГИ ПРОВЕРКИ
+============================================================
+[OK] Портал доступен
+[WARN] Поле UF_CRM_TELEGRAM_CHAT НЕ НАЙДЕНО - нужно создать
+[WARN] Поле UF_CRM_WAIT_REASONS НЕ НАЙДЕНО - нужно создать
+
+============================================================
+РЕКОМЕНДАЦИИ
+============================================================
+
+2. Создайте тестовую сделку:
+   - Перейдите в CRM -> Сделки
+   - Создайте новую сделку
+   - Заполните Telegram чат и причины ожидания
+   - Переведите в стадию 'ЖДЁМ_ДЕЙСТВИЙ_КЛИЕНТА'
+        
+
+3. Для работы webhook в локальное приложение:
+   - Запустите ngrok: ngrok http 8000
+   - Скопируйте URL из ngrok
+   - В Bitrix24: Разработчикам -> Вебхуки -> Добавить webhook для событий
+   - URL обработчика: https://YOUR_NGROK_URL.ngrok.io/webhook/bitrix/deal
+   - События: ONCRMDEAL_UPDATE, ONCRMDEAL_ADD
+    

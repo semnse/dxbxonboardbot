@@ -1,0 +1,78 @@
+Exception in get_status: /crm.status.get.json
+Traceback (most recent call last):
+  File "e:\Carrot1_WaitingClient\app\services\bitrix_smart_api.py", line 172, in get_status
+    async with session.post(url, json=params) as response:
+               ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "e:\Carrot1_WaitingClient\venv\Lib\site-packages\aiohttp\client.py", line 1510, in __aenter__
+    self._resp: _RetType = await self._coro
+                           ^^^^^^^^^^^^^^^^
+  File "e:\Carrot1_WaitingClient\venv\Lib\site-packages\aiohttp\client.py", line 639, in _request
+    raise err_exc_cls(url)
+aiohttp.client_exceptions.InvalidUrlClientError: /crm.status.get.json
+Exception in get_fields: /crm.item.fields.json
+Traceback (most recent call last):
+  File "e:\Carrot1_WaitingClient\app\services\bitrix_smart_api.py", line 230, in get_fields
+    async with session.post(url, json=params) as response:
+               ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "e:\Carrot1_WaitingClient\venv\Lib\site-packages\aiohttp\client.py", line 1510, in __aenter__
+    self._resp: _RetType = await self._coro
+                           ^^^^^^^^^^^^^^^^
+  File "e:\Carrot1_WaitingClient\venv\Lib\site-packages\aiohttp\client.py", line 639, in _request
+    raise err_exc_cls(url)
+aiohttp.client_exceptions.InvalidUrlClientError: /crm.item.fields.json
+Telegram API error: 400 - Bad Request: chat not found
+
+
+======================================================================
+                  КОМПЛЕКСНЫЙ ТЕСТ СИСТЕМЫ                  
+======================================================================
+
+======================================================================
+ТЕСТ 1: ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ
+======================================================================
+[ERROR] Ошибка БД: connection was closed in the middle of operation
+
+======================================================================
+ТЕСТ 2: BITRIX24 API
+======================================================================
+[WARN] Стадия 3150 не найдена
+[WARN] Поля не получены
+
+======================================================================
+ТЕСТ 3: TELEGRAM БОТ
+======================================================================
+[ERROR] Ошибка Telegram: 'TelegramResponse' object has no attribute 'error'
+
+======================================================================
+ТЕСТ 4: СБОРЩИК СООБЩЕНИЙ
+======================================================================
+[OK] Сообщение сформировано
+  Длина: 536 символов
+  Функций: 3
+  Причин: 2
+
+----------------------------------------------------------------------
+ПРИМЕР СООБЩЕНИЯ:
+----------------------------------------------------------------------
+[ERROR] Ошибка сборщика: 'charmap' codec can't encode character '\U0001f50d' in position 0: character maps to <undefined>
+
+======================================================================
+ТЕСТ 5: WEBHOOK ENDPOINT
+======================================================================
+[ERROR] Webhook endpoint недоступен: Cannot connect to host localhost:8000 ssl:default [Удаленный компьютер отклонил это сетевое подключение]
+  (Это нормально, если приложение не запущено)
+
+======================================================================
+ИТОГИ ТЕСТИРОВАНИЯ
+======================================================================
+  [WARN] DATABASE
+  [OK] BITRIX
+  [WARN] TELEGRAM
+  [WARN] MESSAGE_BUILDER
+  [WARN] WEBHOOK
+
+Пройдено тестов: 1/5
+
+[WARN] ТРЕБУЕТСЯ НАСТРОЙКА!
+
+======================================================================
