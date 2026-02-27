@@ -2,29 +2,32 @@
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "e:\\Carrot1_WaitingClient"],
+      "args": ["-y", "@anthropic/mcp-server-filesystem", "e:\\Carrot1_WaitingClient"],
       "env": {
         "ALLOWED_DIRECTORIES": "app,tools,tests,docs,migrations"
       }
     },
     "database": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://postgres:postgres@localhost:5432/onboarding_bot"]
-    },
-    "git": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git", "e:\\Carrot1_WaitingClient"],
+      "command": "python",
+      "args": ["e:\\Carrot1_WaitingClient\\tools\\mcp_database_server.py"],
       "env": {
-        "GIT_AUTHOR_NAME": "DXBX AI Agent",
-        "GIT_AUTHOR_EMAIL": "ai@dxbx.ru"
+        "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/onboarding_bot"
       }
     },
-    "terminal": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-terminal"],
+    "bitrix24": {
+      "command": "python",
+      "args": ["e:\\Carrot1_WaitingClient\\tools\\mcp_bitrix24_server.py"],
       "env": {
-        "ALLOWED_COMMANDS": "python,pip,git,docker,uvicorn,pytest,curl"
+        "BITRIX_WEBHOOK_URL": "https://docsinbox.bitrix24.ru/rest/100398/cu1jtnas2sy621t3/"
+      }
+    },
+    "telegram": {
+      "command": "python",
+      "args": ["e:\\Carrot1_WaitingClient\\tools\\mcp_telegram_server.py"],
+      "env": {
+        "TELEGRAM_BOT_TOKEN": "8507378489:AAHKHl8UPnZgvP800WPofp7brrzDLuBXp0c"
       }
     }
-  }
+  },
+  "note": "For Claude Desktop configuration, see docs/AI_AGENT_WORKFLOW.md"
 }
