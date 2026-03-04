@@ -10,13 +10,13 @@ Telegram Bot Commands Handler
 import logging
 from typing import Optional, Dict, Any
 
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.types import Message
-from aiogram.exceptions import TelegramNetworkError, TelegramAPIError
+from aiogram.exceptions import TelegramAPIError
 
 from app.config import settings
-from app.database.connection import get_db_session, AsyncSessionLocal
+from app.database.connection import get_db_session
 from app.database.repository import ChatBindingRepository
 from app.database.models import ChatBinding
 from app.services.bitrix_polling_service import BitrixPollingService
@@ -27,12 +27,18 @@ from app.services.telegram_service import TelegramService
 logger = logging.getLogger(__name__)
 
 # Инициализация бота и диспетчера
-# Важно: создаём один экземпляр для всего приложения
 bot = Bot(token=settings.telegram_bot_token, session=None)
 dp = Dispatcher()
 
-# Кэш для хранения привязок chat_id -> bitrix_id (временное решение без БД)
-_chat_cache: Dict[int, Dict[str, Any]] = {}
+# Глобальный кэш для временного хранения привязок (сбрасывается при рестарте)
+_chat_cache: Dict[str, Dict[str, Any]] = {}
+
+
+def _get_cache_key(chat_id: int, message_thread_id: Optional[int] = None) -> str:
+    """Создаёт ключ кэша с учётом топика"""
+    if message_thread_id:
+        return f"{chat_id}_thread_{message_thread_id}"
+    return str(chat_id)
 
 
 # ============================================
@@ -235,26 +241,15 @@ async def cmd_add(message: Message):
             pass
 
         # Сохраняем в кэш (всегда)
-        if message_thread_id:
-            # Для Topics сохраняем с ключом включающим thread_id
-            _chat_cache[f"{message.chat.id}_thread_{message_thread_id}"] = {
-                'chat_id': message.chat.id,
-                'message_thread_id': message_thread_id,
-                'chat_title': message.chat.title,
-                'bitrix_deal_id': bitrix_id,
-                'company_name': company_name
-            }
-            logger.info(f"Cached binding with topic: chat={message.chat.id}, thread={message_thread_id}, bitrix={bitrix_id}")
-        else:
-            # Для обычных чатов
-            _chat_cache[message.chat.id] = {
-                'chat_id': message.chat.id,
-                'message_thread_id': None,
-                'chat_title': message.chat.title,
-                'bitrix_deal_id': bitrix_id,
-                'company_name': company_name
-            }
-            logger.info(f"Cached binding: chat={message.chat.id}, bitrix={bitrix_id}")
+        cache_key = _get_cache_key(message.chat.id, message_thread_id)
+        _chat_cache[cache_key] = {
+            'chat_id': message.chat.id,
+            'message_thread_id': message_thread_id,
+            'chat_title': message.chat.title,
+            'bitrix_deal_id': bitrix_id,
+            'company_name': company_name
+        }
+        logger.debug(f"Cached binding: {cache_key}, bitrix={bitrix_id}")
 
         # Отправляем подтверждение
         text = (
@@ -302,23 +297,14 @@ async def cmd_report(message: Message):
         # Ищем привязку в памяти (кэш)
         # В production нужно использовать БД, но для теста берём из Bitrix напрямую
         # Проверяем последние команды /add для этого чата
-        from app.bot.commands import _chat_cache
-
         # Получаем ID топика (для Topics групп)
-        message_thread_id = None
-        if hasattr(message, 'message_thread_id'):
-            message_thread_id = message.message_thread_id
-
-        # Сначала ищем в кэше с учётом топика
-        binding = None
-        if message_thread_id:
-            # Для Topics - ищем привязку для конкретного топика
-            cached_data = _chat_cache.get(f"{message.chat.id}_thread_{message_thread_id}")
-            if cached_data:
-                binding = cached_data
-        else:
-            # Для обычных чатов
-            binding = _chat_cache.get(message.chat.id)
+        message_thread_id = getattr(message, 'message_thread_id', None)
+        
+        # Ключ кэша с учётом топика
+        cache_key = _get_cache_key(message.chat.id, message_thread_id)
+        
+        # Сначала ищем в кэше
+        binding = _chat_cache.get(cache_key)
 
         if not binding:
             # Пытаемся получить из БД (sync version)
@@ -333,14 +319,22 @@ async def cmd_report(message: Message):
                         with get_db_cursor() as cur:
                             if message_thread_id:
                                 # Для Topics - ищем в конкретном топике
+                                # ИЛИ ищем привязку без топика (для обратной совместимости)
                                 cur.execute(
-                                    "SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name FROM chat_bindings WHERE chat_id = %s AND message_thread_id = %s",
+                                    """SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name 
+                                       FROM chat_bindings 
+                                       WHERE chat_id = %s AND (message_thread_id = %s OR message_thread_id IS NULL)
+                                       ORDER BY message_thread_id DESC NULLS LAST
+                                       LIMIT 1""",
                                     (message.chat.id, message_thread_id)
                                 )
                             else:
                                 # Для обычных чатов - ищем без топика
                                 cur.execute(
-                                    "SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name FROM chat_bindings WHERE chat_id = %s AND message_thread_id IS NULL",
+                                    """SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name 
+                                       FROM chat_bindings 
+                                       WHERE chat_id = %s AND message_thread_id IS NULL
+                                       LIMIT 1""",
                                     (message.chat.id,)
                                 )
                             return dict_fetchall(cur)
@@ -350,7 +344,8 @@ async def cmd_report(message: Message):
 
                 bindings = await loop.run_in_executor(None, _get_bindings)
                 if bindings:
-                    binding = bindings[0]  # Берём первую привязку
+                    binding = bindings[0]
+                    logger.debug(f"Found DB binding: chat={message.chat.id}, thread={message_thread_id}")
             except Exception as e:
                 logger.error(f"Error getting binding: {e}")
                 binding = None
@@ -364,7 +359,9 @@ async def cmd_report(message: Message):
 
         # Получаем данные из Bitrix
         bitrix_polling = BitrixPollingService()
-        full_item = await bitrix_polling.get_item_by_id(int(binding['bitrix_deal_id'] if isinstance(binding, dict) else binding.bitrix_deal_id))
+        bitrix_id = binding.get('bitrix_deal_id') if isinstance(binding, dict) else binding.bitrix_deal_id
+        logger.info(f"Fetching Bitrix data for item {bitrix_id}...")
+        full_item = await bitrix_polling.get_item_by_id(int(bitrix_id))
 
         if not full_item:
             await progress_message.edit_text(
