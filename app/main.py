@@ -20,8 +20,12 @@ from app.config import settings
 from app.database.connection import init_db, close_db
 from app.bot.scheduler import start_scheduler, shutdown_scheduler
 from app.bot.commands import dp, bot, start_bot_polling, stop_bot_polling
+from app.bot.subscriptions import subscriptions_router
 from app.api.routes import webhook, health
 from app.utils.logger import setup_logging
+
+# Подключаем новый роутер с обработчиками подписок
+dp.include_router(subscriptions_router)
 
 # Настраиваем логирование
 setup_logging()

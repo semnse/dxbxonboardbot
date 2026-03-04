@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     # TELEGRAM
     # ============================================
     telegram_bot_token: str = ""
+    
+    # Webhook настройки для Telegram
+    bot_webhook_url: str = ""
+    bot_secret_token: str = ""
 
     # ============================================
     # BITRIX24
@@ -50,15 +54,15 @@ class Settings(BaseSettings):
     bitrix_oauth_client_id: Optional[str] = None
     bitrix_oauth_client_secret: Optional[str] = None
     bitrix_oauth_access_token: Optional[str] = None
+    
+    # Настройки для Celery задач
+    bitrix_domain: Optional[str] = None
+    bitrix_webhook_key: Optional[str] = None
 
     # ============================================
-    # DATABASE
+    # DATABASE & REDIS
     # ============================================
     database_url: str = "postgresql://bot_user:password@localhost:5432/onboarding_bot"
-
-    # ============================================
-    # REDIS
-    # ============================================
     redis_url: str = "redis://localhost:6379/0"
 
     # ============================================
@@ -75,7 +79,13 @@ class Settings(BaseSettings):
     bot_work_hours_start: int = 9
     bot_work_hours_end: int = 18
     bot_max_reminders: int = 30
+    max_subscriptions_per_user: int = 5
 
+    # ============================================
+    # CELERY SETTINGS
+    # ============================================
+    celery_broker_url: Optional[str] = None  # Будет использоваться redis_url если не задан
+    
     # ============================================
     # SECURITY
     # ============================================

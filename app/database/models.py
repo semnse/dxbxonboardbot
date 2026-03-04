@@ -279,13 +279,15 @@ class BotSetting(Base):
 class ChatBinding(Base):
     """
     Привязка Telegram чатов к карточкам Bitrix24.
-    
+
     Используется для отправки отчётов в групповые чаты.
+    Поддерживает Telegram Topics (форумы).
     """
     __tablename__ = "chat_bindings"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    chat_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True)
+    chat_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    message_thread_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)  # ID топика
     chat_title: Mapped[str] = mapped_column(String(255), nullable=True)
     bitrix_deal_id: Mapped[str] = mapped_column(String(50), nullable=False)
     company_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -296,11 +298,13 @@ class ChatBinding(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    
+
     __table_args__ = (
         Index("idx_chat_bindings_chat_id", "chat_id"),
         Index("idx_chat_bindings_bitrix_deal_id", "bitrix_deal_id"),
+        # Уникальная пара chat_id + message_thread_id
+        Index("idx_chat_bindings_unique", "chat_id", "message_thread_id", "bitrix_deal_id", unique=True),
     )
-    
+
     def __repr__(self):
-        return f"<ChatBinding(chat_id={self.chat_id}, bitrix={self.bitrix_deal_id})>"
+        return f"<ChatBinding(chat_id={self.chat_id}, thread={self.message_thread_id}, bitrix={self.bitrix_deal_id})>"

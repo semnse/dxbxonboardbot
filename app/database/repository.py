@@ -352,20 +352,51 @@ class ChatBindingRepository(BaseRepository[ChatBinding]):
     def __init__(self, session: AsyncSession):
         super().__init__(ChatBinding, session)
     
-    async def get_by_chat_id(self, chat_id: int) -> Optional[ChatBinding]:
-        """Получить привязку по ID чата (sync version)"""
-        from app.database.db_sync import get_db_cursor, dict_fetchone
-        
+    async def get_by_chat_and_thread(
+        self,
+        chat_id: int,
+        message_thread_id: Optional[int] = None
+    ) -> List[ChatBinding]:
+        """Получить привязки по чату и топику (sync version)"""
+        from app.database.db_sync import get_db_cursor, dict_fetchall
+
         loop = asyncio.get_event_loop()
-        
+
+        def _fetch():
+            with get_db_cursor() as cur:
+                if message_thread_id:
+                    cur.execute(
+                        """SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name, is_active, created_at, updated_at 
+                           FROM chat_bindings 
+                           WHERE chat_id = %s AND message_thread_id = %s""",
+                        (chat_id, message_thread_id)
+                    )
+                else:
+                    cur.execute(
+                        """SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name, is_active, created_at, updated_at 
+                           FROM chat_bindings 
+                           WHERE chat_id = %s AND message_thread_id IS NULL""",
+                        (chat_id,)
+                    )
+                return dict_fetchall(cur)
+
+        result = await loop.run_in_executor(None, _fetch)
+        return [ChatBinding(**r) for r in result] if result else []
+
+    async def get_by_chat_id(self, chat_id: int) -> Optional[ChatBinding]:
+        """Получить привязку по ID чата (sync version, устарело, используйте get_by_chat_and_thread)"""
+        from app.database.db_sync import get_db_cursor, dict_fetchone
+
+        loop = asyncio.get_event_loop()
+
         def _fetch():
             with get_db_cursor() as cur:
                 cur.execute(
-                    "SELECT id, chat_id, chat_title, bitrix_deal_id, company_name, is_active, created_at, updated_at FROM chat_bindings WHERE chat_id = %s",
+                    "SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name, is_active, created_at, updated_at FROM chat_bindings WHERE chat_id = %s LIMIT 1",
                     (chat_id,)
                 )
                 return dict_fetchone(cur)
-        
+
         result = await loop.run_in_executor(None, _fetch)
         if result:
             return ChatBinding(**result)
@@ -409,19 +440,33 @@ class ChatBindingRepository(BaseRepository[ChatBinding]):
     async def create(self, **kwargs) -> ChatBinding:
         """Создать привязку (sync version)"""
         from app.database.db_sync import get_db_cursor, dict_fetchone
-        
+
         loop = asyncio.get_event_loop()
-        
+
         def _create():
             with get_db_cursor() as cur:
-                cur.execute(
-                    """INSERT INTO chat_bindings (chat_id, chat_title, bitrix_deal_id, company_name, is_active)
-                       VALUES (%s, %s, %s, %s, TRUE)
-                       RETURNING id, chat_id, chat_title, bitrix_deal_id, company_name, is_active, created_at, updated_at""",
-                    (kwargs.get('chat_id'), kwargs.get('chat_title'), kwargs.get('bitrix_deal_id'), kwargs.get('company_name'))
-                )
+                message_thread_id = kwargs.get('message_thread_id')
+                
+                if message_thread_id:
+                    # Для Topics чатов
+                    cur.execute(
+                        """INSERT INTO chat_bindings (chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name, is_active, created_at, updated_at)
+                           VALUES (%s, %s, %s, %s, %s, TRUE, NOW(), NOW())
+                           ON CONFLICT (chat_id, message_thread_id, bitrix_deal_id) DO UPDATE
+                           SET company_name = EXCLUDED.company_name, updated_at = NOW()
+                           RETURNING id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name, is_active, created_at, updated_at""",
+                        (kwargs.get('chat_id'), message_thread_id, kwargs.get('chat_title'), kwargs.get('bitrix_deal_id'), kwargs.get('company_name'))
+                    )
+                else:
+                    # Для обычных чатов
+                    cur.execute(
+                        """INSERT INTO chat_bindings (chat_id, chat_title, bitrix_deal_id, company_name, is_active, created_at, updated_at)
+                           VALUES (%s, %s, %s, %s, TRUE, NOW(), NOW())
+                           RETURNING id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name, is_active, created_at, updated_at""",
+                        (kwargs.get('chat_id'), kwargs.get('chat_title'), kwargs.get('bitrix_deal_id'), kwargs.get('company_name'))
+                    )
                 return dict_fetchone(cur)
-        
+
         result = await loop.run_in_executor(None, _create)
         return ChatBinding(**result) if result else None
     

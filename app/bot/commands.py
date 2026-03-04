@@ -45,27 +45,64 @@ async def cmd_start(message: Message):
         # Проверяем, это группа или личный чат
         if message.chat.type in ["group", "supergroup"]:
             text = (
-                "👋 Здравствуйте! Я бот онбординга DocsInBox.\n\n"
-                "Я буду напоминать о шагах внедрения и объяснять, почему это важно.\n\n"
-                "<b>Как использовать:</b>\n"
-                "1. Внедренец пишет: /add <ID карточки из Bitrix>\n"
-                "   Пример: /add 9200\n"
-                "2. Я буду отправлять отчёты по этой карточке каждое утро в 9:00\n\n"
-                "<b>Команды:</b>\n"
-                "/add <ID> — Привязать карточку Bitrix к этому чату\n"
-                "/report — Получить текущий отчёт\n"
-                "/help — Помощь"
+                "👋 <b>Здравствуйте! Я бот онбординга DocsInBox</b>\n\n"
+                
+                "🤖 <b>Кто я:</b>\n"
+                "Я умный помощник для сопровождения клиентов на этапе внедрения.\n"
+                "Автоматически отслеживаю статусы в Bitrix24 и напоминаю о важных шагах.\n\n"
+                
+                "✨ <b>Чем полезен:</b>\n"
+                "• 📊 Ежедневные отчёты в 9:00 МСК\n"
+                "• ⏰ Напоминания о действиях клиента\n"
+                "• 🎯 Контроль этапов внедрения\n"
+                "• 📱 Работа в обычных чатах и Topics\n"
+                "• 🔍 Отчёты по продуктам (ЕГАИС, Меркурий, Маркировка, Накладные, ЮЗЭДО)\n\n"
+                
+                "👥 <b>Для кого:</b>\n"
+                "• <b>Внедренцы:</b> автоматические отчёты для клиентов\n"
+                "• <b>Клиенты:</b> понятные инструкции что делать дальше\n"
+                "• <b>Руководители:</b> прозрачность процесса внедрения\n\n"
+                
+                "<b>📋 Команды:</b>\n"
+                "/add <ID> — Привязать карточку Bitrix к этому чату/топику\n"
+                "/report — Получить текущий отчёт по карточке\n"
+                "/product_report — Отчёт по продуктам (ЕГАИС, Меркурий и др.)\n"
+                "/help — Подробная справка\n\n"
+                
+                "<b>🚀 Как начать:</b>\n"
+                "1. Добавьте бота в чат с клиентом\n"
+                "2. Напишите: /add <ID карточки>\n"
+                "3. Бот будет отправлять отчёты каждое утро в 9:00\n\n"
+                
+                "<i>ID карточки можно взять из ссылки в Bitrix24:</i>\n"
+                "<code>https://...bitrix24.ru/crm/leader/1070/9200/</code>\n"
+                "<i>↑ здесь ID = 9200</i>"
             )
         else:
             text = (
-                "👋 Здравствуйте! Я бот онбординга DocsInBox.\n\n"
-                "Я работаю в групповых чатах с внедренцами и клиентами.\n\n"
-                "Добавьте меня в чат и используйте команду /add <ID карточки>"
+                "👋 <b>Здравствуйте! Я бот онбординга DocsInBox</b>\n\n"
+                
+                "🤖 <b>Кто я:</b>\n"
+                "Я умный помощник для сопровождения клиентов на этапе внедрения.\n"
+                "Автоматически отслеживаю статусы в Bitrix24 и напоминаю о важных шагах.\n\n"
+                
+                "✨ <b>Что умею:</b>\n"
+                "• Ежедневные отчёты в 9:00 МСК\n"
+                "• Напоминания о действиях клиента\n"
+                "• Контроль этапов внедрения\n"
+                "• Отчёты по продуктам\n\n"
+                
+                "💡 <b>Я работаю в групповых чатах!</b>\n"
+                "Добавьте меня в чат с клиентом и внедренцем,\n"
+                "и я буду автоматически отправлять отчёты.\n\n"
+                
+                "<b>Команды:</b>\n"
+                "/help — Подробная справка"
             )
 
         await message.answer(text, parse_mode="HTML")
         logger.info(f"Command /start executed by {message.from_user.first_name} in chat {message.chat.id}")
-        
+
     except TelegramAPIError as e:
         logger.error(f"Telegram API error in /start: {e}")
     except Exception as e:
@@ -78,14 +115,14 @@ async def cmd_start(message: Message):
 @dp.message(Command("add"))
 async def cmd_add(message: Message):
     """
-    Привязка карточки Bitrix к чату.
+    Привязка карточки Bitrix к чату (или топику в Topics).
 
     Использование: /add 9200
-    
+
     Логика:
     1. Парсим ID карточки из аргументов
     2. Проверяем карточку в Bitrix24
-    3. Сохраняем привязку в базу данных
+    3. Сохраняем привязку в базу данных (с учётом message_thread_id для Topics)
     4. Отправляем подтверждение
     """
     try:
@@ -157,11 +194,22 @@ async def cmd_add(message: Message):
             async with get_db_session() as session:
                 chat_binding_repo = ChatBindingRepository(session)
 
-                # Проверяем, есть ли уже привязка для этого чата
-                existing = await chat_binding_repo.get_by_chat_id(message.chat.id)
+                # Получаем ID топика (для Topics групп)
+                # message_thread_id доступен только в Topics чатах
+                message_thread_id = None
+                if hasattr(message, 'message_thread_id'):
+                    message_thread_id = message.message_thread_id
+                    logger.info(f"Topic detected: thread_id={message_thread_id}")
 
-                if existing:
-                    # Обновляем существующую привязку
+                # Проверяем, есть ли уже привязка для этого чата + топика
+                existing_bindings = await chat_binding_repo.get_by_chat_and_thread(
+                    message.chat.id,
+                    message_thread_id
+                )
+
+                if existing_bindings:
+                    # Обновляем существующую привязку (первую)
+                    existing = existing_bindings[0]
                     await chat_binding_repo.update(
                         existing.id,
                         bitrix_deal_id=bitrix_id,
@@ -169,30 +217,44 @@ async def cmd_add(message: Message):
                         chat_title=message.chat.title,
                         is_active=True
                     )
-                    logger.info(f"Updated binding: chat={message.chat.id}, bitrix={bitrix_id}")
+                    logger.info(f"Updated binding: chat={message.chat.id}, thread={message_thread_id}, bitrix={bitrix_id}")
                 else:
                     # Создаём новую привязку
                     await chat_binding_repo.create(
                         chat_id=message.chat.id,
+                        message_thread_id=message_thread_id,
                         chat_title=message.chat.title,
                         bitrix_deal_id=bitrix_id,
                         company_name=company_name
                     )
-                    logger.info(f"Created binding: chat={message.chat.id}, bitrix={bitrix_id}")
+                    logger.info(f"Created binding: chat={message.chat.id}, thread={message_thread_id}, bitrix={bitrix_id}")
 
         except Exception as db_error:
             logger.error(f"Database error: {db_error}")
             # БД не доступна, но сохраняем в кэш
             pass
-        
+
         # Сохраняем в кэш (всегда)
-        _chat_cache[message.chat.id] = {
-            'chat_id': message.chat.id,
-            'chat_title': message.chat.title,
-            'bitrix_deal_id': bitrix_id,
-            'company_name': company_name
-        }
-        logger.info(f"Cached binding: chat={message.chat.id}, bitrix={bitrix_id}")
+        if message_thread_id:
+            # Для Topics сохраняем с ключом включающим thread_id
+            _chat_cache[f"{message.chat.id}_thread_{message_thread_id}"] = {
+                'chat_id': message.chat.id,
+                'message_thread_id': message_thread_id,
+                'chat_title': message.chat.title,
+                'bitrix_deal_id': bitrix_id,
+                'company_name': company_name
+            }
+            logger.info(f"Cached binding with topic: chat={message.chat.id}, thread={message_thread_id}, bitrix={bitrix_id}")
+        else:
+            # Для обычных чатов
+            _chat_cache[message.chat.id] = {
+                'chat_id': message.chat.id,
+                'message_thread_id': None,
+                'chat_title': message.chat.title,
+                'bitrix_deal_id': bitrix_id,
+                'company_name': company_name
+            }
+            logger.info(f"Cached binding: chat={message.chat.id}, bitrix={bitrix_id}")
 
         # Отправляем подтверждение
         text = (
@@ -241,30 +303,54 @@ async def cmd_report(message: Message):
         # В production нужно использовать БД, но для теста берём из Bitrix напрямую
         # Проверяем последние команды /add для этого чата
         from app.bot.commands import _chat_cache
-        
-        binding = _chat_cache.get(message.chat.id)
-        
+
+        # Получаем ID топика (для Topics групп)
+        message_thread_id = None
+        if hasattr(message, 'message_thread_id'):
+            message_thread_id = message.message_thread_id
+
+        # Сначала ищем в кэше с учётом топика
+        binding = None
+        if message_thread_id:
+            # Для Topics - ищем привязку для конкретного топика
+            cached_data = _chat_cache.get(f"{message.chat.id}_thread_{message_thread_id}")
+            if cached_data:
+                binding = cached_data
+        else:
+            # Для обычных чатов
+            binding = _chat_cache.get(message.chat.id)
+
         if not binding:
             # Пытаемся получить из БД (sync version)
             try:
-                from app.database.db_sync import get_db_cursor, dict_fetchone
+                from app.database.db_sync import get_db_cursor, dict_fetchall
                 import asyncio
-                
+
                 loop = asyncio.get_event_loop()
-                
-                def _get_binding():
+
+                def _get_bindings():
                     try:
                         with get_db_cursor() as cur:
-                            cur.execute(
-                                "SELECT id, chat_id, chat_title, bitrix_deal_id, company_name FROM chat_bindings WHERE chat_id = %s LIMIT 1",
-                                (message.chat.id,)
-                            )
-                            return dict_fetchone(cur)
+                            if message_thread_id:
+                                # Для Topics - ищем в конкретном топике
+                                cur.execute(
+                                    "SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name FROM chat_bindings WHERE chat_id = %s AND message_thread_id = %s",
+                                    (message.chat.id, message_thread_id)
+                                )
+                            else:
+                                # Для обычных чатов - ищем без топика
+                                cur.execute(
+                                    "SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name FROM chat_bindings WHERE chat_id = %s AND message_thread_id IS NULL",
+                                    (message.chat.id,)
+                                )
+                            return dict_fetchall(cur)
                     except Exception as db_err:
                         logger.warning(f"DB error in /report: {db_err}")
                         return None
-                
-                binding = await loop.run_in_executor(None, _get_binding)
+
+                bindings = await loop.run_in_executor(None, _get_bindings)
+                if bindings:
+                    binding = bindings[0]  # Берём первую привязку
             except Exception as e:
                 logger.error(f"Error getting binding: {e}")
                 binding = None
@@ -350,34 +436,55 @@ async def cmd_report(message: Message):
 async def cmd_help(message: Message):
     """Справка по командам"""
     try:
-        text = """<b>Бот онбординга DocsInBox</b>
+        text = """<b>🤖 Бот онбординга DocsInBox</b>
 
-Я помогаю внедренцам и клиентам отслеживать прогресс внедрения.
+Я помогаю внедренцам и клиентам отслеживать прогресс внедрения продуктов.
 
-<b>Команды:</b>
+<b>📋 Основные команды:</b>
 
-/add <ID> — Привязать карточку Bitrix к чату
-  Пример: /add 9200
-  ID берётся из ссылки на карточку в Bitrix24
+/add <ID> — Привязать карточку Bitrix к чату/топику
+  <i>Пример:</i> <code>/add 9200</code>
+  <i>ID берётся из ссылки на карточку в Bitrix24</i>
 
 /report — Получить текущий отчёт по привязанной карточке
+  <i>Показывает стадию, продукты и задачи</i>
+
+/product_report — Отчёт по продуктам
+  <i>ЕГАИС, Меркурий, Маркировка, Накладные, ЮЗЭДО</i>
 
 /help — Показать эту справку
 
-<b>Как это работает:</b>
+<b>👥 Для кого:</b>
 
-1. Внедренец создаёт чат с клиентом
-2. Добавляет бота в чат
-3. Пишет /add <ID карточки>
-4. Бот отправляет отчёты каждое утро в 9:00 МСК
+• <b>Внедренцы:</b> добавьте бота в чат с клиентом и забудьте о ручных отчётах
+• <b>Клиенты:</b> получайте понятные инструкции что делать дальше
+• <b>Руководители:</b> контролируйте прогресс внедрения
 
-<b>Что в отчёте:</b>
+<b>⚙️ Как работает:</b>
+
+1️⃣ Внедренец создаёт чат с клиентом
+2️⃣ Добавляет бота в чат
+3️⃣ Пишет <code>/add <ID карточки></code>
+4️⃣ Бот отправляет отчёты каждое утро в 9:00 МСК
+
+<b>📊 Что в отчёте:</b>
+• Название компании и ИНН
+• Текущая стадия внедрения
 • Список подключённых продуктов
 • Осталось сделать (с причинами)
-• Риски (почему это важно)"""
+• Риски (почему это важно)
+
+<b>🎯 Особенности:</b>
+• Работает в обычных чатах
+• Поддерживает Telegram Topics (отдельные привязки по топикам)
+• Автоматические отчёты в 9:00 МСК
+• Интеграция с Bitrix24
+
+<b>📞 Вопросы?</b>
+Обратитесь к разработчикам бота."""
 
         await message.answer(text, parse_mode="HTML")
-        
+
     except TelegramAPIError as e:
         logger.error(f"Telegram API error in /help: {e}")
     except Exception as e:

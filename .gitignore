@@ -70,3 +70,36 @@ ssl/
 *.key
 *.pem
 !ssl/.gitkeep
+
+# Temporary/Debug files
+*.txt
+*.bat
+*.md
+!README.md
+!QWEN.md
+!STATUS.md
+!docs/
+!tools/.gitkeep
+
+# MCP servers
+tools/mcp_*.py
+
+# Test/Debug scripts
+tools/check_*.py
+tools/test_*.py
+tools/debug_*.py
+tools/bitrix_*.py
+tools/find_*.py
+tools/get_*.py
+tools/send_*.py
+tools/search_*.py
+tools/sync_*.py
+tools/migrate_*.py
+tools/final_*.py
+tools/full_*.py
+tools/direct_*.py
+tools/fix_*.py
+tools/list_*.py
+tools/run_bot.py
+tools/simple_db_check.py
+tools/watch_*.py

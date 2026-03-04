@@ -9,5 +9,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем весь проект
 COPY . .
 
-# Запускаем бота (FastAPI + aiogram polling)
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Команда по умолчанию - запуск воркера
+CMD ["celery", "-A", "app.celery_app", "worker", "--loglevel=info", "--concurrency=4"]
