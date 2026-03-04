@@ -18,13 +18,15 @@ import structlog
 
 from app.config import settings
 from app.database.connection import init_db, close_db
+from app.bot import dp, bot
 from app.bot.scheduler import start_scheduler, shutdown_scheduler
-from app.bot.commands import dp, bot, start_bot_polling, stop_bot_polling
+from app.bot.commands import commands_router
 from app.bot.subscriptions import subscriptions_router
 from app.api.routes import webhook, health
 from app.utils.logger import setup_logging
 
-# Подключаем новый роутер с обработчиками подписок
+# Подключаем роутеры с обработчиками
+dp.include_router(commands_router)
 dp.include_router(subscriptions_router)
 
 # Настраиваем логирование
@@ -40,13 +42,13 @@ _bot_polling_task: asyncio.Task | None = None
 async def run_bot_polling_task():
     """
     Запускает polling бота как asyncio task.
-    
+
     Важно: запускается в том же event loop что и FastAPI,
     а не в отдельном потоке.
     """
     try:
         logger.info("Bot polling task started")
-        await start_bot_polling()
+        await dp.start_polling(bot, allowed_updates=["message", "callback_query"])
     except asyncio.CancelledError:
         logger.info("Bot polling task cancelled")
         raise
@@ -126,7 +128,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
         # Закрытие сессии бота
         try:
-            await stop_bot_polling()
+            await bot.session.close()
             logger.info("Bot session closed")
         except Exception as e:
             logger.error(f"Error closing bot session: {e}")

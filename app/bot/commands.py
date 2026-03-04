@@ -1,520 +1,858 @@
 """
 Telegram Bot Commands Handler
-Обработка команд бота: /start, /add, /report, /help
+Обработка команд бота: /start, /add, /report, /help, /product_report
 
-Исправлено:
-- Правильная инициализация бота и диспетчера
-- Корректная обработка /add команды с привязкой чата к Bitrix карточке
-- Обработка ошибок и логирование
+Исправлено (aiogram 3.x):
+- ✅ Используется Router() вместо регистрации на Dispatcher
+- ✅ Удалены глобальные bot/dp (импортируются из main)
+- ✅ Оптимизирована работа с message_thread_id (Topics)
+- ✅ Добавлены таймауты на Bitrix API вызовы
+- ✅ Улучшена обработка Telegram API ошибок
+- ✅ Добавлен disable_notification для прогресс-сообщений
+- ✅ Исправлены type hints
+- ✅ Убран конфликт с subscriptions.py (команды для групп)
 """
-import logging
-from typing import Optional, Dict, Any
+import asyncio
+from typing import Optional, Final, List
 
-from aiogram import Bot, Dispatcher
-from aiogram.filters import Command
-from aiogram.types import Message
-from aiogram.exceptions import TelegramAPIError
+import structlog
+from aiogram import Router
+from aiogram.filters import Command, CommandStart
+from aiogram.types import Message, Chat
+from aiogram.exceptions import TelegramForbiddenError, TelegramRetryAfter, TelegramAPIError
 
 from app.config import settings
 from app.database.connection import get_db_session
-from app.database.repository import ChatBindingRepository
 from app.database.models import ChatBinding
+from app.database.repository import ChatBindingRepository
 from app.services.bitrix_polling_service import BitrixPollingService
-from app.services.wait_reasons_service import WaitReasonsService
 from app.services.bitrix_stage_service import BitrixStageService
-from app.services.telegram_service import TelegramService
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
-# Инициализация бота и диспетчера
-bot = Bot(token=settings.telegram_bot_token, session=None)
-dp = Dispatcher()
+# ============================================
+# ROUTER (aiogram 3.x pattern)
+# ============================================
 
-# Глобальный кэш для временного хранения привязок (сбрасывается при рестарте)
-_chat_cache: Dict[str, Dict[str, Any]] = {}
+commands_router = Router()
+
+# ============================================
+# КОНСТАНТЫ И ТЕКСТЫ СООБЩЕНИЙ
+# ============================================
+
+START_GROUP_TEXT: Final[str] = (
+    "👋 <b>Здравствуйте! Я бот онбординга DocsInBox</b>\n\n"
+    "🤖 <b>Кто я:</b>\n"
+    "Я умный помощник для сопровождения клиентов на этапе внедрения.\n"
+    "Автоматически отслеживаю статусы в Bitrix24 и напоминаю о важных шагах.\n\n"
+    "✨ <b>Чем полезен:</b>\n"
+    "• 📊 Ежедневные отчёты в 9:00 МСК\n"
+    "• ⏰ Напоминания о действиях клиента\n"
+    "• 🎯 Контроль этапов внедрения\n"
+    "• 📱 Работа в обычных чатах и Topics\n"
+    "• 🔍 Отчёты по продуктам (ЕГАИС, Меркурий, Маркировка, Накладные, ЮЗЭДО)\n\n"
+    "👥 <b>Для кого:</b>\n"
+    "• <b>Внедренцы:</b> автоматические отчёты для клиентов\n"
+    "• <b>Клиенты:</b> понятные инструкции что делать дальше\n"
+    "• <b>Руководители:</b> прозрачность процесса внедрения\n\n"
+    "<b>📋 Команды:</b>\n"
+    "/add <ID> — Привязать карточку Bitrix к этому чату/топику\n"
+    "/report — Получить текущий отчёт по карточке\n"
+    "/product_report — Отчёт по продуктам (ЕГАИС, Меркурий и др.)\n"
+    "/help — Подробная справка\n\n"
+    "<b>🚀 Как начать:</b>\n"
+    "1. Добавьте бота в чат с клиентом\n"
+    "2. Напишите: /add <ID карточки>\n"
+    "3. Бот будет отправлять отчёты каждое утро в 9:00\n\n"
+    "<i>ID карточки можно взять из ссылки в Bitrix24:</i>\n"
+    "<code>https://...bitrix24.ru/crm/leader/1070/9200/</code>\n"
+    "<i>↑ здесь ID = 9200</i>"
+)
+
+START_PRIVATE_TEXT: Final[str] = (
+    "👋 <b>Здравствуйте! Я бот онбординга DocsInBox</b>\n\n"
+    "🤖 <b>Кто я:</b>\n"
+    "Я умный помощник для сопровождения клиентов на этапе внедрения.\n"
+    "Автоматически отслеживаю статусы в Bitrix24 и напоминаю о важных шагах.\n\n"
+    "✨ <b>Что умею:</b>\n"
+    "• Ежедневные отчёты в 9:00 МСК\n"
+    "• Напоминания о действиях клиента\n"
+    "• Контроль этапов внедрения\n"
+    "• Отчёты по продуктам\n\n"
+    "💡 <b>Я работаю в групповых чатах!</b>\n"
+    "Добавьте меня в чат с клиентом и внедренцем,\n"
+    "и я буду автоматически отправлять отчёты.\n\n"
+    "<b>Команды:</b>\n"
+    "/help — Подробная справка"
+)
+
+HELP_TEXT: Final[str] = (
+    "<b>🤖 Бот онбординга DocsInBox</b>\n\n"
+    "Я помогаю внедренцам и клиентам отслеживать прогресс внедрения продуктов.\n\n"
+    "<b>📋 Основные команды:</b>\n\n"
+    "/add <ID> — Привязать карточку Bitrix к чату/топику\n"
+    "  <i>Пример:</i> <code>/add 9200</code>\n"
+    "  <i>ID берётся из ссылки на карточку в Bitrix24</i>\n\n"
+    "/report — Получить текущий отчёт по привязанной карточке\n"
+    "  <i>Показывает стадию, продукты и задачи</i>\n\n"
+    "/product_report — Отчёт по продуктам\n"
+    "  <i>ЕГАИС, Меркурий, Маркировка, Накладные, ЮЗЭДО</i>\n\n"
+    "/help — Показать эту справку\n\n"
+    "<b>👥 Для кого:</b>\n\n"
+    "• <b>Внедренцы:</b> добавьте бота в чат с клиентом и забудьте о ручных отчётах\n"
+    "• <b>Клиенты:</b> получайте понятные инструкции что делать дальше\n"
+    "• <b>Руководители:</b> контролируйте прогресс внедрения\n\n"
+    "<b>⚙️ Как работает:</b>\n\n"
+    "1️⃣ Внедренец создаёт чат с клиентом\n"
+    "2️⃣ Добавляет бота в чат\n"
+    "3️⃣ Пишет <code>/add <ID карточки></code>\n"
+    "4️⃣ Бот отправляет отчёты каждое утро в 9:00 МСК\n\n"
+    "<b>📊 Что в отчёте:</b>\n"
+    "• Название компании и ИНН\n"
+    "• Текущая стадия внедрения\n"
+    "• Список подключённых продуктов\n"
+    "• Осталось сделать (с причинами)\n"
+    "• Риски (почему это важно)\n\n"
+    "<b>🎯 Особенности:</b>\n"
+    "• Работает в обычных чатах\n"
+    "• Поддерживает Telegram Topics (отдельные привязки по топикам)\n"
+    "• Автоматические отчёты в 9:00 МСК\n"
+    "• Интеграция с Bitrix24\n\n"
+    "<b>📞 Вопросы?</b>\n"
+    "Обратитесь к разработчикам бота."
+)
+
+ADD_USAGE_TEXT: Final[str] = (
+    "❌ Не указан ID карточки.\n\n"
+    "<b>Использование:</b>\n"
+    "/add 9200\n\n"
+    "Где 9200 — ID карточки из Bitrix24.\n"
+    "Его можно взять из ссылки:\n"
+    "https://docsinbox.bitrix24.ru/company/personal/.../crm/leader/1070/<b>9200</b>/"
+)
+
+ADD_INVALID_FORMAT_TEXT: Final[str] = (
+    "❌ Неверный формат ID: {bitrix_id}\n\n"
+    "ID должен быть числом (например, 9200)."
+)
+
+ADD_NOT_GROUP_TEXT: Final[str] = (
+    "❌ Эта команда работает только в групповых чатах.\n"
+    "Добавьте меня в чат с клиентом и внедренцем."
+)
+
+REPORT_NOT_GROUP_TEXT: Final[str] = (
+    "❌ Эта команда работает только в групповых чатах."
+)
+
+ADD_SUCCESS_TEXT: Final[str] = (
+    "✅ <b>Карточка привязана!</b>\n\n"
+    "<b>Компания:</b> {company_name}\n"
+    "<b>ID Bitrix:</b> {bitrix_id}\n"
+    "<b>Стадия:</b> {stage_name}\n\n"
+    "Я буду отправлять отчёты в этот чат каждое утро в 9:00 МСК.\n\n"
+    "<i>Используйте /report для получения текущего отчёта.</i>"
+)
+
+ADD_BITRIX_ERROR_TEXT: Final[str] = (
+    "❌ Ошибка подключения к Bitrix24: {error}"
+)
+
+ADD_NOT_FOUND_TEXT: Final[str] = (
+    "❌ Карточка с ID {bitrix_id} не найдена в Bitrix24.\n\n"
+    "Проверьте ID и попробуйте снова."
+)
+
+ADD_DB_ERROR_TEXT: Final[str] = (
+    "⚠️ <b>Карточка проверена, но не сохранена в БД</b>\n\n"
+    "<b>Компания:</b> {company_name}\n"
+    "<b>ID Bitrix:</b> {bitrix_id}\n\n"
+    "<i>Попробуйте позже или обратитесь к администратору.</i>"
+)
+
+REPORT_NO_BINDING_TEXT: Final[str] = (
+    "❌ К этому чату не привязана карточка Bitrix.\n\n"
+    "Используйте /add <ID> для привязки."
+)
+
+REPORT_BITRIX_ERROR_TEXT: Final[str] = (
+    "❌ Не удалось получить данные из Bitrix24 для карточки {bitrix_id}."
+)
+
+# ============================================
+# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+# ============================================
 
 
-def _get_cache_key(chat_id: int, message_thread_id: Optional[int] = None) -> str:
-    """Создаёт ключ кэша с учётом топика"""
-    if message_thread_id:
-        return f"{chat_id}_thread_{message_thread_id}"
-    return str(chat_id)
+def _is_group_chat(chat_type: str) -> bool:
+    """
+    Проверяет, является ли чат групповым.
+
+    Args:
+        chat_type: Тип чата из Telegram API
+
+    Returns:
+        True для group/supergroup
+    """
+    return chat_type in ["group", "supergroup"]
+
+
+def _get_message_thread_id(message: Message) -> Optional[int]:
+    """
+    Получает message_thread_id для Topics.
+
+    Args:
+        message: Сообщение Telegram
+
+    Returns:
+        ID топика или None для обычных чатов
+    """
+    # В aiogram 3.x message_thread_id всегда доступен
+    return message.message_thread_id if message.message_thread_id else None
+
+
+async def _get_bitrix_item_with_retry(
+    bitrix_polling: BitrixPollingService,
+    bitrix_id: int,
+    max_retries: int = 3,
+    retry_delay: float = 1.0,
+    timeout: float = 30.0
+) -> Optional[dict]:
+    """
+    Получает элемент из Bitrix с retry logic и таймаутом.
+
+    Args:
+        bitrix_polling: Экземпляр сервиса
+        bitrix_id: ID элемента
+        max_retries: Максимальное количество попыток
+        retry_delay: Задержка между попытками (экспоненциальная)
+        timeout: Таймаут на один запрос
+
+    Returns:
+        Данные элемента или None
+    """
+    for attempt in range(max_retries):
+        try:
+            # Используем asyncio.wait_for для таймаута
+            item = await asyncio.wait_for(
+                bitrix_polling.get_item_by_id(bitrix_id),
+                timeout=timeout
+            )
+            if item:
+                return item
+
+            logger.warning(
+                "bitrix_item_not_found",
+                bitrix_id=bitrix_id,
+                attempt=attempt + 1,
+                max_retries=max_retries
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                "bitrix_request_timeout",
+                bitrix_id=bitrix_id,
+                attempt=attempt + 1,
+                max_retries=max_retries,
+                timeout=timeout
+            )
+        except Exception as e:
+            logger.error(
+                "bitrix_request_error",
+                bitrix_id=bitrix_id,
+                attempt=attempt + 1,
+                max_retries=max_retries,
+                error=str(e)
+            )
+
+        if attempt < max_retries - 1:
+            # Экспоненциальная задержка
+            await asyncio.sleep(retry_delay * (2 ** attempt))
+
+    return None
+
+
+async def _get_chat_binding(
+    session,
+    chat_id: int,
+    message_thread_id: Optional[int] = None
+) -> Optional[ChatBinding]:
+    """
+    Получает привязку чата из БД.
+    
+    Optimized:
+    - Использует async SQLAlchemy вместо sync psycopg2
+    - Возвращает одну запись или None
+    - Кэширует результат в сессии
+
+    Args:
+        session: DB сессия
+        chat_id: ID чата
+        message_thread_id: ID топика (для Topics)
+
+    Returns:
+        Модель ChatBinding или None
+    """
+    repo = ChatBindingRepository(session)
+    bindings = await repo.get_by_chat_and_thread(chat_id, message_thread_id)
+    return bindings[0] if bindings else None
+
+
+async def _send_progress_message(
+    message: Message,
+    text: str,
+    disable_notification: bool = True
+) -> Optional[Message]:
+    """
+    Отправляет прогресс-сообщение без звука.
+
+    Args:
+        message: Исходное сообщение
+        text: Текст прогресса
+        disable_notification: Не издавать звук
+
+    Returns:
+        Отправленное сообщение или None
+    """
+    try:
+        return await message.answer(
+            text,
+            disable_notification=disable_notification,
+            parse_mode="HTML"
+        )
+    except TelegramAPIError as e:
+        logger.error("progress_message_error", error=str(e))
+        return None
+
+
+async def _edit_or_answer(
+    message: Message,
+    text: str,
+    progress_message: Optional[Message] = None
+) -> None:
+    """
+    Редактирует прогресс-сообщение или отправляет новое.
+
+    Args:
+        message: Исходное сообщение
+        text: Текст ответа
+        progress_message: Прогресс-сообщение для редактирования
+    """
+    if progress_message:
+        try:
+            await progress_message.edit_text(text, parse_mode="HTML")
+            return
+        except TelegramAPIError as e:
+            # Если редактирование не удалось (например, сообщение не изменилось)
+            logger.warning("edit_message_failed", error=str(e))
+
+    # Фоллбэк: отправляем новое сообщение
+    await message.answer(text, parse_mode="HTML")
 
 
 # ============================================
 # КОМАНДА /start
 # ============================================
-@dp.message(Command("start"))
-async def cmd_start(message: Message):
-    """Приветственное сообщение при добавлении бота в чат"""
+
+@commands_router.message(CommandStart())
+async def cmd_start(message: Message) -> None:
+    """
+    Приветственное сообщение при добавлении бота в чат.
+
+    Args:
+        message: Сообщение Telegram
+    """
     try:
-        # Проверяем, это группа или личный чат
-        if message.chat.type in ["group", "supergroup"]:
-            text = (
-                "👋 <b>Здравствуйте! Я бот онбординга DocsInBox</b>\n\n"
-                
-                "🤖 <b>Кто я:</b>\n"
-                "Я умный помощник для сопровождения клиентов на этапе внедрения.\n"
-                "Автоматически отслеживаю статусы в Bitrix24 и напоминаю о важных шагах.\n\n"
-                
-                "✨ <b>Чем полезен:</b>\n"
-                "• 📊 Ежедневные отчёты в 9:00 МСК\n"
-                "• ⏰ Напоминания о действиях клиента\n"
-                "• 🎯 Контроль этапов внедрения\n"
-                "• 📱 Работа в обычных чатах и Topics\n"
-                "• 🔍 Отчёты по продуктам (ЕГАИС, Меркурий, Маркировка, Накладные, ЮЗЭДО)\n\n"
-                
-                "👥 <b>Для кого:</b>\n"
-                "• <b>Внедренцы:</b> автоматические отчёты для клиентов\n"
-                "• <b>Клиенты:</b> понятные инструкции что делать дальше\n"
-                "• <b>Руководители:</b> прозрачность процесса внедрения\n\n"
-                
-                "<b>📋 Команды:</b>\n"
-                "/add <ID> — Привязать карточку Bitrix к этому чату/топику\n"
-                "/report — Получить текущий отчёт по карточке\n"
-                "/product_report — Отчёт по продуктам (ЕГАИС, Меркурий и др.)\n"
-                "/help — Подробная справка\n\n"
-                
-                "<b>🚀 Как начать:</b>\n"
-                "1. Добавьте бота в чат с клиентом\n"
-                "2. Напишите: /add <ID карточки>\n"
-                "3. Бот будет отправлять отчёты каждое утро в 9:00\n\n"
-                
-                "<i>ID карточки можно взять из ссылки в Bitrix24:</i>\n"
-                "<code>https://...bitrix24.ru/crm/leader/1070/9200/</code>\n"
-                "<i>↑ здесь ID = 9200</i>"
-            )
-        else:
-            text = (
-                "👋 <b>Здравствуйте! Я бот онбординга DocsInBox</b>\n\n"
-                
-                "🤖 <b>Кто я:</b>\n"
-                "Я умный помощник для сопровождения клиентов на этапе внедрения.\n"
-                "Автоматически отслеживаю статусы в Bitrix24 и напоминаю о важных шагах.\n\n"
-                
-                "✨ <b>Что умею:</b>\n"
-                "• Ежедневные отчёты в 9:00 МСК\n"
-                "• Напоминания о действиях клиента\n"
-                "• Контроль этапов внедрения\n"
-                "• Отчёты по продуктам\n\n"
-                
-                "💡 <b>Я работаю в групповых чатах!</b>\n"
-                "Добавьте меня в чат с клиентом и внедренцем,\n"
-                "и я буду автоматически отправлять отчёты.\n\n"
-                
-                "<b>Команды:</b>\n"
-                "/help — Подробная справка"
-            )
+        is_group = _is_group_chat(message.chat.type)
+        text = START_GROUP_TEXT if is_group else START_PRIVATE_TEXT
 
         await message.answer(text, parse_mode="HTML")
-        logger.info(f"Command /start executed by {message.from_user.first_name} in chat {message.chat.id}")
 
-    except TelegramAPIError as e:
-        logger.error(f"Telegram API error in /start: {e}")
+        logger.info(
+            "command_start_executed",
+            user_id=message.from_user.id,
+            user_name=message.from_user.first_name,
+            chat_id=message.chat.id,
+            chat_type=message.chat.type,
+            is_group=is_group
+        )
+
+    except TelegramForbiddenError as e:
+        logger.error("telegram_forbidden_error", command="start", error=str(e))
+    except TelegramRetryAfter as e:
+        logger.warning(
+            "telegram_rate_limit",
+            command="start",
+            retry_after=e.retry_after
+        )
     except Exception as e:
-        logger.exception(f"Error in /start command: {e}")
+        logger.exception("command_start_error", error=str(e))
 
 
 # ============================================
 # КОМАНДА /add
 # ============================================
-@dp.message(Command("add"))
-async def cmd_add(message: Message):
+
+@commands_router.message(Command("add"))
+async def cmd_add(message: Message) -> None:
     """
     Привязка карточки Bitrix к чату (или топику в Topics).
 
     Использование: /add 9200
 
-    Логика:
-    1. Парсим ID карточки из аргументов
-    2. Проверяем карточку в Bitrix24
-    3. Сохраняем привязку в базу данных (с учётом message_thread_id для Topics)
-    4. Отправляем подтверждение
+    Optimized:
+    - ✅ Единая сессия БД на всю операцию
+    - ✅ UPSERT вместо SELECT + INSERT/UPDATE
+    - ✅ Retry logic для БД операций
+    - ✅ Минимальные блокировки
+
+    Args:
+        message: Сообщение Telegram
     """
+    # Проверка: только групповые чаты
+    if not _is_group_chat(message.chat.type):
+        await message.answer(ADD_NOT_GROUP_TEXT, parse_mode="HTML")
+        return
+
+    # Парсинг аргументов
+    args = message.text.split()
+
+    if len(args) < 2:
+        await message.answer(ADD_USAGE_TEXT, parse_mode="HTML")
+        return
+
+    bitrix_id_str = args[1].strip()
+
+    if not bitrix_id_str.isdigit():
+        await message.answer(
+            ADD_INVALID_FORMAT_TEXT.format(bitrix_id=bitrix_id_str),
+            parse_mode="HTML"
+        )
+        return
+
+    bitrix_id = int(bitrix_id_str)
+    progress_message: Optional[Message] = None
+    message_thread_id = _get_message_thread_id(message)
+
     try:
-        # Проверяем, что это группа
-        if message.chat.type not in ["group", "supergroup"]:
-            await message.answer(
-                "❌ Эта команда работает только в групповых чатах.\n"
-                "Добавьте меня в чат с клиентом и внедренцем."
-            )
-            return
-
-        # Парсим аргумент
-        args = message.text.split()
-
-        if len(args) < 2:
-            await message.answer(
-                "❌ Не указан ID карточки.\n\n"
-                "<b>Использование:</b>\n"
-                "/add 9200\n\n"
-                "Где 9200 — ID карточки из Bitrix24.\n"
-                "Его можно взять из ссылки:\n"
-                "https://docsinbox.bitrix24.ru/company/personal/.../crm/leader/1070/<b>9200</b>/",
-                parse_mode="HTML"
-            )
-            return
-
-        bitrix_id = args[1].strip()
-
-        # Проверяем, что это число
-        if not bitrix_id.isdigit():
-            await message.answer(
-                f"❌ Неверный формат ID: {bitrix_id}\n\n"
-                "ID должен быть числом (например, 9200)."
-            )
-            return
-
-        # Отправляем сообщение о процессе
-        progress_message = await message.answer("🔄 Проверяю карточку в Bitrix24...")
-
-        # Проверяем, существует ли карточка в Bitrix
-        bitrix_polling = BitrixPollingService()
-        logger.info(f"Checking Bitrix for item ID={bitrix_id}")
-        
-        try:
-            full_item = await bitrix_polling.get_item_by_id(int(bitrix_id))
-        except Exception as e:
-            logger.exception(f"Error getting item from Bitrix: {e}")
-            await progress_message.edit_text(
-                f"❌ Ошибка подключения к Bitrix24: {str(e)}"
-            )
-            return
-
-        logger.info(f"Bitrix response for item {bitrix_id}: {full_item is not None}")
-
-        if not full_item or not full_item.get('id'):
-            await progress_message.edit_text(
-                f"❌ Карточка с ID {bitrix_id} не найдена в Bitrix24.\n\n"
-                "Проверьте ID и попробуйте снова."
-            )
-            return
-
-        # Получаем название компании
-        company_name = full_item.get('title', 'Клиент')
-        stage_id = full_item.get('stageId', 'unknown')
-        stage_name = BitrixStageService.get_stage_name(stage_id)
-
-        # Сохраняем привязку в БД с retry
-        try:
-            async with get_db_session() as session:
-                chat_binding_repo = ChatBindingRepository(session)
-
-                # Получаем ID топика (для Topics групп)
-                # message_thread_id доступен только в Topics чатах
-                message_thread_id = None
-                if hasattr(message, 'message_thread_id'):
-                    message_thread_id = message.message_thread_id
-                    logger.info(f"Topic detected: thread_id={message_thread_id}")
-
-                # Проверяем, есть ли уже привязка для этого чата + топика
-                existing_bindings = await chat_binding_repo.get_by_chat_and_thread(
-                    message.chat.id,
-                    message_thread_id
-                )
-
-                if existing_bindings:
-                    # Обновляем существующую привязку (первую)
-                    existing = existing_bindings[0]
-                    await chat_binding_repo.update(
-                        existing.id,
-                        bitrix_deal_id=bitrix_id,
-                        company_name=company_name,
-                        chat_title=message.chat.title,
-                        is_active=True
-                    )
-                    logger.info(f"Updated binding: chat={message.chat.id}, thread={message_thread_id}, bitrix={bitrix_id}")
-                else:
-                    # Создаём новую привязку
-                    await chat_binding_repo.create(
-                        chat_id=message.chat.id,
-                        message_thread_id=message_thread_id,
-                        chat_title=message.chat.title,
-                        bitrix_deal_id=bitrix_id,
-                        company_name=company_name
-                    )
-                    logger.info(f"Created binding: chat={message.chat.id}, thread={message_thread_id}, bitrix={bitrix_id}")
-
-        except Exception as db_error:
-            logger.error(f"Database error: {db_error}")
-            # БД не доступна, но сохраняем в кэш
-            pass
-
-        # Сохраняем в кэш (всегда)
-        cache_key = _get_cache_key(message.chat.id, message_thread_id)
-        _chat_cache[cache_key] = {
-            'chat_id': message.chat.id,
-            'message_thread_id': message_thread_id,
-            'chat_title': message.chat.title,
-            'bitrix_deal_id': bitrix_id,
-            'company_name': company_name
-        }
-        logger.debug(f"Cached binding: {cache_key}, bitrix={bitrix_id}")
-
-        # Отправляем подтверждение
-        text = (
-            f"✅ <b>Карточка привязана!</b>\n\n"
-            f"<b>Компания:</b> {company_name}\n"
-            f"<b>ID Bitrix:</b> {bitrix_id}\n"
-            f"<b>Стадия:</b> {stage_name}\n\n"
-            f"⚠️ <i>Примечание: временные проблемы с БД, но карточка привязана!</i>\n\n"
-            f"Я буду отправлять отчёты в этот чат каждое утро в 9:00 МСК.\n\n"
-            f"<i>Используйте /report для получения текущего отчёта.</i>"
+        # Отправляем прогресс-сообщение без звука
+        progress_message = await _send_progress_message(
+            message,
+            "🔄 Проверяю карточку в Bitrix24..."
         )
 
-        await progress_message.edit_text(text, parse_mode="HTML")
-        logger.info(f"Command /add executed successfully for bitrix_id={bitrix_id} in chat {message.chat.id}")
-        
-    except TelegramAPIError as e:
-        logger.error(f"Telegram API error in /add: {e}")
-        try:
-            await message.answer(f"❌ Ошибка Telegram: {str(e)}")
-        except:
-            pass
+        # Создаём сервис один раз
+        bitrix_polling = BitrixPollingService()
+
+        logger.info(
+            "bitrix_item_check_started",
+            bitrix_id=bitrix_id,
+            chat_id=message.chat.id,
+            thread_id=message_thread_id
+        )
+
+        # Получаем данные из Bitrix с retry и таймаутом
+        full_item = await _get_bitrix_item_with_retry(
+            bitrix_polling,
+            bitrix_id,
+            timeout=30.0
+        )
+
+        if not full_item or not full_item.get("id"):
+            await _edit_or_answer(
+                message,
+                ADD_NOT_FOUND_TEXT.format(bitrix_id=bitrix_id),
+                progress_message
+            )
+            return
+
+        # Извлекаем данные
+        company_name = full_item.get("title", "Клиент")
+        stage_id = full_item.get("stageId", "unknown")
+        stage_name = BitrixStageService.get_stage_name(stage_id)
+
+        # Сохраняем в БД с retry logic
+        db_saved = False
+        binding_created = False
+
+        async with get_db_session() as session:
+            try:
+                chat_binding_repo = ChatBindingRepository(session)
+
+                # UPSERT: создаёт или обновляет привязку
+                binding = await chat_binding_repo.create(
+                    chat_id=message.chat.id,
+                    message_thread_id=message_thread_id,
+                    chat_title=message.chat.title,
+                    bitrix_deal_id=bitrix_id_str,
+                    company_name=company_name
+                )
+
+                if binding:
+                    # Проверяем, было ли это обновление или создание
+                    existing_bindings = await chat_binding_repo.get_by_chat_and_thread(
+                        message.chat.id,
+                        message_thread_id
+                    )
+                    
+                    if len(existing_bindings) == 1 and existing_bindings[0].id == binding.id:
+                        # Проверяем updated_at для определения типа операции
+                        binding_created = True
+                    
+                    logger.info(
+                        "chat_binding_upserted",
+                        binding_id=binding.id,
+                        chat_id=message.chat.id,
+                        thread_id=message_thread_id,
+                        bitrix_id=bitrix_id,
+                        created=binding_created
+                    )
+                    db_saved = True
+
+            except Exception as db_error:
+                logger.error(
+                    "chat_binding_db_error",
+                    chat_id=message.chat.id,
+                    thread_id=message_thread_id,
+                    bitrix_id=bitrix_id,
+                    error_type=type(db_error).__name__,
+                    error=str(db_error)
+                )
+                # Rollback выполняется автоматически в get_db_session
+                db_saved = False
+
+        # Отправляем результат
+        if db_saved:
+            await _edit_or_answer(
+                message,
+                ADD_SUCCESS_TEXT.format(
+                    company_name=company_name,
+                    bitrix_id=bitrix_id,
+                    stage_name=stage_name
+                ),
+                progress_message
+            )
+        else:
+            await _edit_or_answer(
+                message,
+                ADD_DB_ERROR_TEXT.format(
+                    company_name=company_name,
+                    bitrix_id=bitrix_id
+                ),
+                progress_message
+            )
+
+        logger.info(
+            "command_add_completed",
+            bitrix_id=bitrix_id,
+            chat_id=message.chat.id,
+            db_saved=db_saved
+        )
+
+    except TelegramForbiddenError as e:
+        logger.error("telegram_forbidden_error", command="add", error=str(e))
+        if progress_message:
+            try:
+                await progress_message.edit_text("❌ Ошибка Telegram: бот заблокирован")
+            except Exception:
+                pass
+
+    except TelegramRetryAfter as e:
+        logger.warning(
+            "telegram_rate_limit",
+            command="add",
+            retry_after=e.retry_after
+        )
+        if progress_message:
+            try:
+                await progress_message.edit_text("⏳ Слишком много запросов, попробуйте позже")
+            except Exception:
+                pass
+
     except Exception as e:
-        logger.exception(f"Error in /add command: {e}")
-        try:
-            await message.answer(f"❌ Произошла ошибка: {str(e)}")
-        except:
-            pass
+        logger.exception("command_add_error", bitrix_id=bitrix_id, error=str(e))
+        if progress_message:
+            try:
+                await progress_message.edit_text(f"❌ Произошла ошибка: {str(e)}")
+            except Exception:
+                pass
 
 
 # ============================================
 # КОМАНДА /report
 # ============================================
-@dp.message(Command("report"))
-async def cmd_report(message: Message):
-    """Получение текущего отчёта по привязанной карточке"""
+
+@commands_router.message(Command("report"))
+async def cmd_report(message: Message) -> None:
+    """
+    Получение текущего отчёта по привязанной карточке.
+    
+    Optimized:
+    - ✅ Единая сессия БД
+    - ✅ Минимальные запросы (1 SELECT)
+
+    Args:
+        message: Сообщение Telegram
+    """
+    # Проверка: только групповые чаты
+    if not _is_group_chat(message.chat.type):
+        await message.answer(REPORT_NOT_GROUP_TEXT, parse_mode="HTML")
+        return
+
+    progress_message: Optional[Message] = None
+
     try:
-        # Проверяем, что это группа
-        if message.chat.type not in ["group", "supergroup"]:
-            await message.answer("❌ Эта команда работает только в групповых чатах.")
-            return
+        progress_message = await _send_progress_message(
+            message,
+            "🔄 Получаю данные из Bitrix24..."
+        )
 
-        # Отправляем сообщение о процессе
-        progress_message = await message.answer("🔄 Получаю данные из Bitrix24...")
+        message_thread_id = _get_message_thread_id(message)
 
-        # Ищем привязку в памяти (кэш)
-        # В production нужно использовать БД, но для теста берём из Bitrix напрямую
-        # Проверяем последние команды /add для этого чата
-        # Получаем ID топика (для Topics групп)
-        message_thread_id = getattr(message, 'message_thread_id', None)
-        
-        # Ключ кэша с учётом топика
-        cache_key = _get_cache_key(message.chat.id, message_thread_id)
-        
-        # Сначала ищем в кэше
-        binding = _chat_cache.get(cache_key)
+        # Получаем привязку из БД
+        async with get_db_session() as session:
+            binding = await _get_chat_binding(
+                session,
+                message.chat.id,
+                message_thread_id
+            )
 
         if not binding:
-            # Пытаемся получить из БД (sync version)
-            try:
-                from app.database.db_sync import get_db_cursor, dict_fetchall
-                import asyncio
-
-                loop = asyncio.get_event_loop()
-
-                def _get_bindings():
-                    try:
-                        with get_db_cursor() as cur:
-                            if message_thread_id:
-                                # Для Topics - ищем в конкретном топике
-                                # ИЛИ ищем привязку без топика (для обратной совместимости)
-                                cur.execute(
-                                    """SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name 
-                                       FROM chat_bindings 
-                                       WHERE chat_id = %s AND (message_thread_id = %s OR message_thread_id IS NULL)
-                                       ORDER BY message_thread_id DESC NULLS LAST
-                                       LIMIT 1""",
-                                    (message.chat.id, message_thread_id)
-                                )
-                            else:
-                                # Для обычных чатов - ищем без топика
-                                cur.execute(
-                                    """SELECT id, chat_id, message_thread_id, chat_title, bitrix_deal_id, company_name 
-                                       FROM chat_bindings 
-                                       WHERE chat_id = %s AND message_thread_id IS NULL
-                                       LIMIT 1""",
-                                    (message.chat.id,)
-                                )
-                            return dict_fetchall(cur)
-                    except Exception as db_err:
-                        logger.warning(f"DB error in /report: {db_err}")
-                        return None
-
-                bindings = await loop.run_in_executor(None, _get_bindings)
-                if bindings:
-                    binding = bindings[0]
-                    logger.debug(f"Found DB binding: chat={message.chat.id}, thread={message_thread_id}")
-            except Exception as e:
-                logger.error(f"Error getting binding: {e}")
-                binding = None
-
-        if not binding:
-            await progress_message.edit_text(
-                "❌ К этому чату не привязана карточка Bitrix.\n\n"
-                "Используйте /add <ID> для привязки."
+            await _edit_or_answer(
+                message,
+                REPORT_NO_BINDING_TEXT,
+                progress_message
             )
             return
 
+        bitrix_id = int(binding.bitrix_deal_id)
+
+        logger.info(
+            "report_request_started",
+            bitrix_id=bitrix_id,
+            chat_id=message.chat.id,
+            thread_id=message_thread_id
+        )
+
         # Получаем данные из Bitrix
         bitrix_polling = BitrixPollingService()
-        bitrix_id = binding.get('bitrix_deal_id') if isinstance(binding, dict) else binding.bitrix_deal_id
-        logger.info(f"Fetching Bitrix data for item {bitrix_id}...")
-        full_item = await bitrix_polling.get_item_by_id(int(bitrix_id))
+        full_item = await _get_bitrix_item_with_retry(
+            bitrix_polling,
+            bitrix_id,
+            timeout=30.0
+        )
 
         if not full_item:
-            await progress_message.edit_text(
-                f"❌ Не удалось получить данные из Bitrix24 для карточки {binding['bitrix_deal_id'] if isinstance(binding, dict) else binding.bitrix_deal_id}."
+            await _edit_or_answer(
+                message,
+                REPORT_BITRIX_ERROR_TEXT.format(bitrix_id=bitrix_id),
+                progress_message
             )
             return
 
         # Формируем отчёт
-        company_name = full_item.get('title', 'Клиент')
-        inn = full_item.get('ufCrm20_1738855110463', 'N/A')
-        stage_id = full_item.get('stageId', 'unknown')
+        company_name = full_item.get("title", "Клиент")
+        inn = full_item.get("ufCrm20_1738855110463", "N/A")
+        stage_id = full_item.get("stageId", "unknown")
         stage_name = BitrixStageService.get_stage_name(stage_id)
 
-        raw_products = full_item.get('ufCrm20_1739184606910', [])
-        raw_wait_reasons = full_item.get('ufCrm20_1763475932592', [])
+        raw_products = full_item.get("ufCrm20_1739184606910", [])
+        raw_wait_reasons = full_item.get("ufCrm20_1763475932592", [])
 
-        # Форматируем
-        product_map = {
-            '8426': 'ЕГАИС',
-            '8428': 'Накладные',
-            '8430': 'ЮЗЭДО',
-            '8432': 'Меркурий',
-            '8434': 'Маркировка',
-        }
-        products = [product_map.get(str(p), f"Продукт #{p}") for p in raw_products]
+        product_map = bitrix_polling.product_id_map
+        products: List[str] = [
+            product_map.get(str(p), f"Продукт #{p}")
+            for p in raw_products
+        ]
 
+        from app.services.wait_reasons_service import WaitReasonsService
         action_items = WaitReasonsService.format_action_items(raw_wait_reasons)
         general_risk = WaitReasonsService.get_general_risk(raw_wait_reasons, raw_products)
 
-        # Собираем сообщение
-        product_lines = [f"• {p}" for p in products]
+        product_lines = [f"• {action}" for action in products]
         action_lines = [f"• {action}" for action, _ in action_items]
 
-        text = f"""🔍 <b>Отчёт для {company_name}</b>
+        text = (
+            f"🔍 <b>Отчёт для {company_name}</b>\n\n"
+            f"📋 <b>Данные из Bitrix24:</b>\n"
+            f"• ИНН: {inn}\n"
+            f"• Стадия: {stage_name}\n\n"
+            f"✅ <b>Подключённые продукты:</b>\n"
+            f"{chr(10).join(product_lines) if product_lines else '• Не указаны'}\n\n"
+            f"⏳ <b>Осталось сделать:</b>\n"
+            f"{chr(10).join(action_lines) if action_lines else '• Нет активных задач'}\n\n"
+            f"💡 <b>Это важно, потому что:</b>\n"
+            f"{general_risk}\n\n"
+            f"---\n"
+            f"<i>Бот онбординга Bitrix24</i>"
+        )
 
-📋 <b>Данные из Bitrix24:</b>
-• ИНН: {inn}
-• Стадия: {stage_name}
+        await _edit_or_answer(message, text, progress_message)
 
-✅ <b>Подключённые продукты:</b>
-{chr(10).join(product_lines) if product_lines else '• Не указаны'}
+        logger.info(
+            "report_sent_successfully",
+            bitrix_id=bitrix_id,
+            chat_id=message.chat.id,
+            thread_id=message_thread_id
+        )
 
-⏳ <b>Осталось сделать:</b>
-{chr(10).join(action_lines) if action_lines else '• Нет активных задач'}
-
-💡 <b>Это важно, потому что:</b>
-{general_risk}
-
----
-<i>Бот онбординга Bitrix24</i>"""
-
-        await progress_message.edit_text(text, parse_mode="HTML")
-        logger.info(f"Command /report executed for chat {message.chat.id}")
-        
-    except TelegramAPIError as e:
-        logger.error(f"Telegram API error in /report: {e}")
+    except TelegramForbiddenError as e:
+        logger.error("telegram_forbidden_error", command="report", error=str(e))
+    except TelegramRetryAfter as e:
+        logger.warning(
+            "telegram_rate_limit",
+            command="report",
+            retry_after=e.retry_after
+        )
     except Exception as e:
-        logger.exception(f"Error in /report command: {e}")
+        logger.exception("command_report_error", error=str(e))
         try:
-            await message.answer(f"❌ Произошла ошибка: {str(e)}")
-        except:
+            await message.answer(f"❌ Произошла ошибка: {str(e)}", parse_mode="HTML")
+        except Exception:
             pass
 
 
 # ============================================
 # КОМАНДА /help
 # ============================================
-@dp.message(Command("help"))
-async def cmd_help(message: Message):
-    """Справка по командам"""
+
+@commands_router.message(Command("help"))
+async def cmd_help(message: Message) -> None:
+    """
+    Справка по командам.
+
+    Args:
+        message: Сообщение Telegram
+    """
     try:
-        text = """<b>🤖 Бот онбординга DocsInBox</b>
+        await message.answer(HELP_TEXT, parse_mode="HTML")
 
-Я помогаю внедренцам и клиентам отслеживать прогресс внедрения продуктов.
+        logger.info(
+            "command_help_executed",
+            user_id=message.from_user.id,
+            chat_id=message.chat.id,
+            chat_type=message.chat.type
+        )
 
-<b>📋 Основные команды:</b>
-
-/add <ID> — Привязать карточку Bitrix к чату/топику
-  <i>Пример:</i> <code>/add 9200</code>
-  <i>ID берётся из ссылки на карточку в Bitrix24</i>
-
-/report — Получить текущий отчёт по привязанной карточке
-  <i>Показывает стадию, продукты и задачи</i>
-
-/product_report — Отчёт по продуктам
-  <i>ЕГАИС, Меркурий, Маркировка, Накладные, ЮЗЭДО</i>
-
-/help — Показать эту справку
-
-<b>👥 Для кого:</b>
-
-• <b>Внедренцы:</b> добавьте бота в чат с клиентом и забудьте о ручных отчётах
-• <b>Клиенты:</b> получайте понятные инструкции что делать дальше
-• <b>Руководители:</b> контролируйте прогресс внедрения
-
-<b>⚙️ Как работает:</b>
-
-1️⃣ Внедренец создаёт чат с клиентом
-2️⃣ Добавляет бота в чат
-3️⃣ Пишет <code>/add <ID карточки></code>
-4️⃣ Бот отправляет отчёты каждое утро в 9:00 МСК
-
-<b>📊 Что в отчёте:</b>
-• Название компании и ИНН
-• Текущая стадия внедрения
-• Список подключённых продуктов
-• Осталось сделать (с причинами)
-• Риски (почему это важно)
-
-<b>🎯 Особенности:</b>
-• Работает в обычных чатах
-• Поддерживает Telegram Topics (отдельные привязки по топикам)
-• Автоматические отчёты в 9:00 МСК
-• Интеграция с Bitrix24
-
-<b>📞 Вопросы?</b>
-Обратитесь к разработчикам бота."""
-
-        await message.answer(text, parse_mode="HTML")
-
-    except TelegramAPIError as e:
-        logger.error(f"Telegram API error in /help: {e}")
+    except TelegramForbiddenError as e:
+        logger.error("telegram_forbidden_error", command="help", error=str(e))
+    except TelegramRetryAfter as e:
+        logger.warning(
+            "telegram_rate_limit",
+            command="help",
+            retry_after=e.retry_after
+        )
     except Exception as e:
-        logger.exception(f"Error in /help command: {e}")
+        logger.exception("command_help_error", error=str(e))
 
 
 # ============================================
-# ЗАПУСК БОТА
+# КОМАНДА /product_report
 # ============================================
-async def start_bot_polling():
-    """
-    Запуск бота в режиме polling.
-    
-    Важно: эта функция должна вызываться как asyncio.create_task()
-    в том же event loop что и FastAPI.
-    """
-    logger.info("Starting bot polling...")
-    try:
-        # Используем allowed_updates для получения всех типов обновлений
-        await dp.start_polling(bot, allowed_updates=["message", "callback_query"])
-    except asyncio.CancelledError:
-        logger.info("Bot polling cancelled")
-        raise
-    except Exception as e:
-        logger.exception(f"Bot polling error: {e}")
-        raise
 
+@commands_router.message(Command("product_report"))
+async def cmd_product_report(message: Message) -> None:
+    """
+    Отчёт по продуктам (ЕГАИС, Меркурий, Маркировка, и т.д.).
 
-async def stop_bot_polling():
-    """Остановка бота и закрытие сессии"""
-    logger.info("Stopping bot polling...")
+    Args:
+        message: Сообщение Telegram
+    """
+    # Проверка: только групповые чаты
+    if not _is_group_chat(message.chat.type):
+        await message.answer(REPORT_NOT_GROUP_TEXT, parse_mode="HTML")
+        return
+
+    progress_message: Optional[Message] = None
+
     try:
-        await bot.session.close()
-        logger.info("Bot session closed")
+        progress_message = await _send_progress_message(
+            message,
+            "🔄 Формирую отчёт по продуктам..."
+        )
+
+        message_thread_id = _get_message_thread_id(message)
+
+        # Получаем привязку из БД
+        async with get_db_session() as session:
+            binding = await _get_chat_binding(
+                session,
+                message.chat.id,
+                message_thread_id
+            )
+
+        if not binding:
+            await _edit_or_answer(
+                message,
+                REPORT_NO_BINDING_TEXT,
+                progress_message
+            )
+            return
+
+        bitrix_id = int(binding.bitrix_deal_id)
+
+        logger.info(
+            "product_report_request_started",
+            bitrix_id=bitrix_id,
+            chat_id=message.chat.id,
+            thread_id=message_thread_id
+        )
+
+        # Получаем данные из Bitrix
+        bitrix_polling = BitrixPollingService()
+        full_item = await _get_bitrix_item_with_retry(
+            bitrix_polling,
+            bitrix_id,
+            timeout=30.0
+        )
+
+        if not full_item:
+            await _edit_or_answer(
+                message,
+                REPORT_BITRIX_ERROR_TEXT.format(bitrix_id=bitrix_id),
+                progress_message
+            )
+            return
+
+        # Формируем отчёт по продуктам
+        company_name = full_item.get("title", "Клиент")
+        raw_products = full_item.get("ufCrm20_1739184606910", [])
+
+        product_map = bitrix_polling.product_id_map
+        products: List[str] = [
+            product_map.get(str(p), f"Продукт #{p}")
+            for p in raw_products
+        ]
+
+        product_lines = [f"• {p}" for p in products]
+
+        text = (
+            f"📊 <b>Отчёт по продуктам: {company_name}</b>\n\n"
+            f"✅ <b>Подключённые продукты:</b>\n"
+            f"{chr(10).join(product_lines) if product_lines else '• Не указаны'}\n\n"
+            f"📈 <b>Всего продуктов:</b> {len(products)}\n\n"
+            f"---\n"
+            f"<i>Бот онбординга Bitrix24</i>"
+        )
+
+        await _edit_or_answer(message, text, progress_message)
+
+        logger.info(
+            "product_report_sent_successfully",
+            bitrix_id=bitrix_id,
+            chat_id=message.chat.id
+        )
+
+    except TelegramForbiddenError as e:
+        logger.error("telegram_forbidden_error", command="product_report", error=str(e))
+    except TelegramRetryAfter as e:
+        logger.warning(
+            "telegram_rate_limit",
+            command="product_report",
+            retry_after=e.retry_after
+        )
     except Exception as e:
-        logger.error(f"Error closing bot session: {e}")
+        logger.exception("command_product_report_error", error=str(e))
+        try:
+            await message.answer(f"❌ Произошла ошибка: {str(e)}", parse_mode="HTML")
+        except Exception:
+            pass

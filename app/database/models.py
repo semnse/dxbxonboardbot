@@ -300,9 +300,15 @@ class ChatBinding(Base):
     )
 
     __table_args__ = (
+        # Индекс для быстрого поиска по чату
         Index("idx_chat_bindings_chat_id", "chat_id"),
+        # Индекс для поиска по Bitrix deal ID
         Index("idx_chat_bindings_bitrix_deal_id", "bitrix_deal_id"),
-        # Уникальная пара chat_id + message_thread_id
+        # Индекс для поиска по чату + топику (основной запрос)
+        Index("idx_chat_bindings_chat_thread", "chat_id", "message_thread_id"),
+        # Покрывающий индекс для частых запросов (chat_id + is_active)
+        Index("idx_chat_bindings_chat_active", "chat_id", "is_active"),
+        # Уникальный индекс для UPSERT
         Index("idx_chat_bindings_unique", "chat_id", "message_thread_id", "bitrix_deal_id", unique=True),
     )
 
