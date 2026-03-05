@@ -1,8 +1,8 @@
 """
-Задача отправки ежедневных отчётов пользователям
+Задача отправки ежедневных отчётов в чаты/топики Telegram
 
 Запускается ежедневно в 09:00 MSK.
-Читает данные из Redis кэша, отправляет в Telegram.
+Читает данные из Bitrix, отправляет в чаты где привязаны карточки.
 """
 import asyncio
 import json
@@ -11,11 +11,13 @@ import logging
 
 from sqlalchemy import select
 from aiogram import Bot
+from aiogram.exceptions import TelegramForbiddenError, TelegramRetryAfter
 
 from app.celery_app import celery_app
 from app.config import settings
 from app.database.connection import get_session_maker
-from app.database.models_bot import User, Subscription, DailyReport
+from app.database.models import ChatBinding
+from app.database.models_bot import DailyReport
 
 logger = logging.getLogger(__name__)
 
@@ -23,130 +25,156 @@ logger = logging.getLogger(__name__)
 @celery_app.task(name="app.tasks.send_task.send_daily_reports")
 def send_daily_reports():
     """
-    Celery задача для отправки ежедневных отчётов пользователям.
+    Celery задача для отправки ежедневных отчётов в чаты/топики.
 
     Запускается ежедневно в 09:00 MSK.
-    Читает данные из Redis кэша, отправляет в Telegram.
+    Отправляет отчёты в чаты где привязаны карточки Bitrix.
     """
     asyncio.run(_send_daily_reports())
 
 
 async def _send_daily_reports():
     """Асинхронная реализация задачи отправки отчётов."""
-    import redis.asyncio as aioredis
+    from app.services.bitrix_polling_service import BitrixPollingService
 
     bot = Bot(token=settings.telegram_bot_token)
-    redis_client = aioredis.from_url(
-        settings.redis_url,
-        encoding="utf-8",
-        decode_responses=True,
-    )
+    bitrix_service = BitrixPollingService()
 
     try:
         session_maker = get_session_maker()
         async with session_maker() as session:
-            # Получаем всех активных пользователей
+            # Получаем все активные привязки чатов
             result = await session.execute(
-                select(User).where(User.is_active == True)
+                select(ChatBinding).where(ChatBinding.is_active == True)
             )
-            users = result.scalars().all()
+            chat_bindings = result.scalars().all()
 
-        logger.info(f"Отправка отчётов {len(users)} активным пользователям")
+        logger.info(f"Отправка отчётов в {len(chat_bindings)} чатов")
 
-        if not users:
-            logger.info("Нет активных пользователей для отправки")
+        if not chat_bindings:
+            logger.info("Нет активных привязок чатов для отправки")
             return
 
-        for user in users:
+        for binding in chat_bindings:
             try:
-                async with session_maker() as session:
-                    # Получаем подписки пользователя
-                    result = await session.execute(
-                        select(Subscription).where(Subscription.user_id == user.id)
-                    )
-                    subs = result.scalars().all()
+                # Получаем данные из Bitrix
+                item = await bitrix_service.get_item_by_id(int(binding.bitrix_deal_id))
 
-                if not subs:
+                if not item:
+                    logger.warning(f"Не удалось получить карточку {binding.bitrix_deal_id}")
                     continue
 
                 # Формируем отчёт
-                lines = ["📊 *Ежедневный отчёт Bitrix24*\n"]
-                items_count = 0
+                company_name = item.get('title', binding.company_name)
+                stage_id = item.get('stageId', 'unknown')
+                
+                lines = [f"📊 *Ежедневный отчёт: {company_name}*\n"]
+                lines.append(f"📋 Стадия: `{stage_id}`")
+                
+                # Продукты
+                products = item.get('ufCrm20_1739184606910', [])
+                if products:
+                    product_map = {
+                        '8426': 'ЕГАИС',
+                        '8428': 'Накладные',
+                        '8430': 'ЮЗЭДО',
+                        '8432': 'Меркурий',
+                        '8434': 'Маркировка',
+                    }
+                    product_names = [product_map.get(str(p), f'Продукт #{p}') for p in products]
+                    lines.append(f"\n✅ Продукты: {', '.join(product_names)}")
+                
+                # Причины ожидания
+                wait_reasons = item.get('ufCrm20_1763475932592', [])
+                if wait_reasons:
+                    lines.append(f"\n⏳ Ожидание: {len(wait_reasons)} причин")
 
-                for sub in subs:
-                    cache_key = f"bitrix:item:{sub.bitrix_item_id}"
-                    cached = await redis_client.get(cache_key)
+                message_text = "\n\n".join(lines)
 
-                    if cached:
-                        item = json.loads(cached)
-                        # Для смарт-процессов используем правильные поля (lowercase)
-                        title = (
-                            item.get("title")
-                            or item.get("TITLE")
-                            or item.get("name")
-                            or item.get("NAME")
-                            or item.get("company_title")
-                            or item.get("COMPANY_TITLE")
-                            or f"ID {sub.bitrix_item_id}"
+                # Отправляем сообщение в чат/топик
+                try:
+                    # Если есть message_thread_id - отправляем в топик
+                    if binding.message_thread_id:
+                        await bot.send_message(
+                            chat_id=binding.chat_id,
+                            text=message_text,
+                            parse_mode="Markdown",
+                            message_thread_id=binding.message_thread_id,  # Отправка в топик!
+                            disable_notification=False,
                         )
-                        stage = (
-                            item.get("stageId")
-                            or item.get("STAGE_ID")
-                            or item.get("stage")
-                            or item.get("STAGE")
-                            or "—"
+                        logger.info(
+                            f"✅ Отчёт отправлен в топик {binding.message_thread_id} "
+                            f"чата {binding.chat_id} (bitrix={binding.bitrix_deal_id})"
                         )
-                        lines.append(f"📌 *{title}*\nСтатус: `{stage}`")
-                        items_count += 1
                     else:
-                        lines.append(
-                            f"⚠️ Карточка {sub.bitrix_item_id}: нет данных"
+                        # Обычный чат без топиков
+                        await bot.send_message(
+                            chat_id=binding.chat_id,
+                            text=message_text,
+                            parse_mode="Markdown",
+                            disable_notification=False,
+                        )
+                        logger.info(f"✅ Отчёт отправлен в чат {binding.chat_id} (bitrix={binding.bitrix_deal_id})")
+
+                except TelegramForbiddenError:
+                    logger.error(f"❌ Бот заблокирован в чате {binding.chat_id}")
+                    # Помечаем привязку как неактивную
+                    async with session_maker() as session:
+                        binding.is_active = False
+                        await session.commit()
+                except TelegramRetryAfter as e:
+                    logger.warning(f"⏳ Flood limit: ждём {e.retry_after} сек")
+                    await asyncio.sleep(e.retry_after)
+                    # Пробуем ещё раз
+                    if binding.message_thread_id:
+                        await bot.send_message(
+                            chat_id=binding.chat_id,
+                            text=message_text,
+                            parse_mode="Markdown",
+                            message_thread_id=binding.message_thread_id,
+                        )
+                    else:
+                        await bot.send_message(
+                            chat_id=binding.chat_id,
+                            text=message_text,
+                            parse_mode="Markdown",
                         )
 
-                # Отправляем сообщение
-                await bot.send_message(
-                    user.tg_id,
-                    "\n\n".join(lines),
-                    parse_mode="Markdown",
-                )
-
-                # Записываем успешную отправку в лог
+                # Записываем в лог отчётов
                 async with session_maker() as session:
                     report = DailyReport(
-                        user_id=user.id,
+                        user_id=0,
                         status="success",
-                        items_count=items_count,
+                        error_message=f"Chat: {binding.chat_id}, Thread: {binding.message_thread_id}",
+                        items_count=1,
                     )
                     session.add(report)
                     await session.commit()
-
-                logger.debug(f"Отчёт отправлен пользователю {user.tg_id}")
 
             except Exception as e:
                 logger.error(
-                    f"Не удалось отправить отчёт пользователю {user.tg_id}: {e}",
+                    f"❌ Не удалось отправить отчёт в чат {binding.chat_id}: {e}",
                     exc_info=True,
                 )
-                # Записываем ошибку в лог
                 async with session_maker() as session:
                     report = DailyReport(
-                        user_id=user.id,
+                        user_id=0,
                         status="failed",
                         error_message=str(e),
+                        items_count=0,
                     )
                     session.add(report)
                     await session.commit()
 
-            # Задержка для защиты от Telegram Flood Wait (0.5-1.0 сек)
+            # Задержка для защиты от Flood Wait
             delay = random.uniform(0.5, 1.0)
             await asyncio.sleep(delay)
 
-        logger.info("Отправка отчётов завершена успешно")
+        logger.info("✅ Отправка отчётов завершена успешно")
 
     except Exception as e:
-        logger.error(f"Критическая ошибка при отправке отчётов: {e}", exc_info=True)
+        logger.error(f"❌ Критическая ошибка при отправке отчётов: {e}", exc_info=True)
         raise
 
     finally:
         await bot.session.close()
-        await redis_client.close()
