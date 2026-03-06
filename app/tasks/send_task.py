@@ -107,7 +107,16 @@ async def _send_message_with_retry(
     while retry_count < max_retries:
         try:
             # Отправка в топик или обычный чат
-            if message_thread_id and message_thread_id > 0:
+            # Явная проверка: message_thread_id должен быть не None и > 0
+            has_thread = message_thread_id is not None and message_thread_id > 0
+            logger.debug(
+                "send_message_check",
+                chat_id=chat_id,
+                message_thread_id=message_thread_id,
+                has_thread=has_thread,
+            )
+            
+            if has_thread:
                 await bot.send_message(
                     chat_id=chat_id,
                     text=text,
@@ -302,6 +311,15 @@ async def _send_daily_reports():
 
                 # Формируем отчёт
                 message_text = _build_report_message(item, binding)
+
+                # Отладочное логирование
+                logger.debug(
+                    "sending_report",
+                    chat_id=binding.chat_id,
+                    message_thread_id=binding.message_thread_id,
+                    bitrix_deal_id=binding.bitrix_deal_id,
+                    company_name=binding.company_name,
+                )
 
                 # Отправляем с retry-логикой
                 result = await _send_message_with_retry(
