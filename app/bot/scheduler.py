@@ -248,7 +248,7 @@ def _build_reminder_message(item: Dict[str, Any], company_name: str) -> str:
 {general_risk}
 
 ---
-<i>Бот онбординга Bitrix24</i>"""
+<i>✨ Docsinbox Внедрение — ваш надёжный помощник!</i>"""
 
     return text
 

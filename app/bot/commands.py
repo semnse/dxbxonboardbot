@@ -728,7 +728,7 @@ async def cmd_report(message: Message) -> None:
             f"{general_risk}\n\n"
             f"{actions_html if actions_html else '✅ <b>Доступно на этой стадии:</b>\n• Нет доступных действий на текущей стадии'}\n\n"
             f"---\n"
-            f"<i>Бот онбординга Bitrix24</i>"
+            f"<i>✨ Docsinbox Внедрение — ваш надёжный помощник!</i>"
         )
 
         await _edit_or_answer(message, text, progress_message)
