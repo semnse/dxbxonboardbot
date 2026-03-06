@@ -40,7 +40,16 @@ class BitrixStageService:
     @classmethod
     def get_stage_name(cls, stage_id: str) -> str:
         """Получает название стадии по ID"""
-        return cls.WAIT_STAGES.get(stage_id, stage_id)
+        stage_name = cls.WAIT_STAGES.get(stage_id, stage_id)
+        
+        # Для стадий группы "Ждём действий клиента" возвращаем только "Ждём действий клиента"
+        if cls.is_wait_stage(stage_id) and ' - ' in stage_name:
+            parts = stage_name.split(' - ', 1)
+            if len(parts) == 2:
+                # Возвращаем первую часть (например "Ждём действий клиента")
+                return parts[0].strip()
+        
+        return stage_name
     
     @classmethod
     def is_wait_stage(cls, stage_id: str) -> bool:
