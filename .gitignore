@@ -1,4 +1,6 @@
-# Python
+# ============================================
+# PYTHON
+# ============================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,74 +22,99 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
+# ============================================
+# VIRTUAL ENVIRONMENTS
+# ============================================
 venv/
 env/
 ENV/
 .venv
 
+# ============================================
 # IDE
+# ============================================
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 
-# Environment
+# ============================================
+# ENVIRONMENT
+# ============================================
 .env
 .env.local
 .env.*.local
+.env.production
 
-# Logs
+# ============================================
+# LOGS
+# ============================================
 logs/
 *.log
 
-# Database
+# ============================================
+# DATABASE
+# ============================================
 *.db
 *.sqlite3
 
-# Testing
+# ============================================
+# TESTING
+# ============================================
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
 
-# Docker
+# ============================================
+# DOCKER
+# ============================================
 *.pid
 
+# ============================================
 # OS
+# ============================================
 .DS_Store
 Thumbs.db
 
-# Temporary files
+# ============================================
+# TEMPORARY FILES
+# ============================================
 tmp/
 temp/
 *.tmp
 
-# SSL certificates
+# ============================================
+# SSL CERTIFICATES
+# ============================================
 ssl/
 *.crt
 *.key
 *.pem
 !ssl/.gitkeep
 
-# Temporary/Debug files
-*.txt
-*.bat
+# ============================================
+# DOCUMENTATION
+# ============================================
+# Keep only essential markdown files
 *.md
 !README.md
 !QWEN.md
 !STATUS.md
-!docs/
-!tools/.gitkeep
+!docs/*.md
 
-# MCP servers
-tools/mcp_*.py
+# ============================================
+# TOOLS
+# ============================================
+# Keep only essential
+tools/.gitkeep
+tools/explore_*.py
 
-# Test/Debug scripts
+# Remove test/debug scripts
 tools/check_*.py
-tools/test_*.py
 tools/debug_*.py
+tools/test_*.py
 tools/bitrix_*.py
 tools/find_*.py
 tools/get_*.py
@@ -103,3 +130,19 @@ tools/list_*.py
 tools/run_bot.py
 tools/simple_db_check.py
 tools/watch_*.py
+tools/product_structure.json
+
+# MCP servers
+tools/mcp_*.py
+
+# ============================================
+# REPORTS
+# ============================================
+*.txt
+*.bat
+BUGFIX_*.md
+CLEANUP_*.md
+INTEGRATION_*.md
+TEST_*.md
+SPECIFICATION.md
+steps.md
