@@ -6,7 +6,7 @@
 """
 import asyncio
 import random
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 import structlog
 from sqlalchemy import select
@@ -55,6 +55,8 @@ def _build_report_message(item: dict, binding: ChatBinding) -> str:
     Returns:
         Текст сообщения в Markdown
     """
+    from app.services.product_actions_service import ProductActionsService
+
     company_name = item.get("title", binding.company_name)
     stage_id = item.get("stageId", "unknown")
 
@@ -63,6 +65,8 @@ def _build_report_message(item: dict, binding: ChatBinding) -> str:
 
     # Продукты
     products = item.get("ufCrm20_1739184606910", [])
+    product_codes = [str(p) for p in products] if products else []
+
     if products:
         product_map = {
             "8426": "ЕГАИС",
@@ -74,12 +78,55 @@ def _build_report_message(item: dict, binding: ChatBinding) -> str:
         product_names = [product_map.get(str(p), f"Продукт #{p}") for p in products]
         lines.append(f"\n✅ Продукты: {', '.join(product_names)}")
 
+    # Доступные действия по продуктам
+    actions_by_product = ProductActionsService.get_all_actions_for_stage(stage_id, product_codes)
+    if actions_by_product:
+        actions_text = _format_actions_block(actions_by_product)
+        lines.append(f"\n{actions_text}")
+
     # Причины ожидания
     wait_reasons = item.get("ufCrm20_1763475932592", [])
     if wait_reasons:
         lines.append(f"\n⏳ Ожидание: {len(wait_reasons)} причин")
 
     return "\n\n".join(lines)
+
+
+def _format_actions_block(actions_by_product: Dict[str, List[str]]) -> str:
+    """
+    Форматирует блок доступных действий для Telegram отчёта.
+
+    Args:
+        actions_by_product: Dict {название_продукта: [список действий]}
+
+    Returns:
+        Отформатированный текст с заголовком и маркированным списком
+
+    Пример вывода:
+        ✅ Доступно на этой стадии:
+        • ЕГАИС:
+          - Приемка накладных
+          - Списание пива вручную
+        • Меркурий:
+          - Получение, гашение и возврат ВСД
+    """
+    if not actions_by_product:
+        return ""
+
+    lines = ["✅ *Доступно на этой стадии:*"]
+
+    for product_name, actions in actions_by_product.items():
+        if not actions:
+            continue
+
+        # Заголовок продукта
+        lines.append(f"• *{product_name}:*")
+
+        # Список действий
+        for action in actions:
+            lines.append(f"  - {action}")
+
+    return "\n".join(lines)
 
 
 async def _send_message_with_retry(

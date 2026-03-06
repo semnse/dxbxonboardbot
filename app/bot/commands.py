@@ -13,7 +13,7 @@ Telegram Bot Commands Handler
 - ✅ Убран конфликт с subscriptions.py (команды для групп)
 """
 import asyncio
-from typing import Optional, Final, List
+from typing import Optional, Final, List, Dict
 
 import structlog
 from aiogram import Router
@@ -209,6 +209,43 @@ def _get_message_thread_id(message: Message) -> Optional[int]:
     """
     # В aiogram 3.x message_thread_id всегда доступен
     return message.message_thread_id if message.message_thread_id else None
+
+
+def _format_actions_block_html(actions_by_product: Dict[str, List[str]]) -> str:
+    """
+    Форматирует блок доступных действий для Telegram отчёта (HTML режим).
+
+    Args:
+        actions_by_product: Dict {название_продукта: [список действий]}
+
+    Returns:
+        Отформатированный текст с заголовком и маркированным списком
+
+    Пример вывода:
+        ✅ Доступно на этой стадии:
+        • ЕГАИС:
+          - Приемка накладных
+          - Списание пива вручную
+        • Меркурий:
+          - Получение, гашение и возврат ВСД
+    """
+    if not actions_by_product:
+        return ""
+
+    lines = ["✅ <b>Доступно на этой стадии:</b>"]
+
+    for product_name, actions in actions_by_product.items():
+        if not actions:
+            continue
+
+        # Заголовок продукта
+        lines.append(f"• <b>{product_name}:</b>")
+
+        # Список действий
+        for action in actions:
+            lines.append(f"  - {action}")
+
+    return "\n".join(lines)
 
 
 async def _get_bitrix_item_with_retry(
@@ -665,11 +702,18 @@ async def cmd_report(message: Message) -> None:
         ]
 
         from app.services.wait_reasons_service import WaitReasonsService
+        from app.services.product_actions_service import ProductActionsService
+        
         action_items = WaitReasonsService.format_action_items(raw_wait_reasons)
         general_risk = WaitReasonsService.get_general_risk(raw_wait_reasons, raw_products)
 
         product_lines = [f"• {action}" for action in products]
         action_lines = [f"• {action}" for action, _ in action_items]
+        
+        # Доступные действия по продуктам
+        product_codes = [str(p) for p in raw_products] if raw_products else []
+        actions_by_product = ProductActionsService.get_all_actions_for_stage(stage_id, product_codes)
+        actions_html = _format_actions_block_html(actions_by_product)
 
         text = (
             f"🔍 <b>Отчёт для {company_name}</b>\n\n"
@@ -682,6 +726,7 @@ async def cmd_report(message: Message) -> None:
             f"{chr(10).join(action_lines) if action_lines else '• Нет активных задач'}\n\n"
             f"💡 <b>Это важно, потому что:</b>\n"
             f"{general_risk}\n\n"
+            f"{actions_html if actions_html else '✅ <b>Доступно на этой стадии:</b>\n• Нет доступных действий на текущей стадии'}\n\n"
             f"---\n"
             f"<i>Бот онбординга Bitrix24</i>"
         )
