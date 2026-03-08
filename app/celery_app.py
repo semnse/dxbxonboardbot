@@ -30,6 +30,10 @@ celery_app = Celery(
 celery_app.conf.timezone = settings.timezone
 celery_app.conf.enable_utc = False
 
+# Отключаем fast_trace_task для совместимости с Python 3.13
+celery_app.conf.task_always_eager = False
+celery_app.conf.task_track_success = True
+
 # Расписание задач (по Москве)
 celery_app.conf.beat_schedule = {
     "fetch-daily-statuses": {
