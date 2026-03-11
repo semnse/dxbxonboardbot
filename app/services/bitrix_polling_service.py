@@ -137,8 +137,8 @@ class BitrixPollingService:
                             logger.info(f"Last page reached, total items: {len(all_items)}")
                             break
 
-                        # Небольшая задержка между запросами для избежания rate limiting
-                        await asyncio.sleep(0.2)
+                        # Небольшая задержка между запросами для избежания rate limiting (2 запроса/сек)
+                        await asyncio.sleep(0.5)
 
             except ClientError as e:
                 logger.error(f"Network error fetching items: {e}")

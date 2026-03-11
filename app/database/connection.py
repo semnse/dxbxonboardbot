@@ -147,6 +147,7 @@ def _is_retryable_error(error: Exception) -> bool:
         return True
     
     # asyncpg специфичные ошибки
+    # Примечание: используем правильные имена классов исключений asyncpg
     retryable_exceptions = [
         asyncpg.exceptions.InterfaceError,
         asyncpg.exceptions.InterfaceWarning,
@@ -154,8 +155,7 @@ def _is_retryable_error(error: Exception) -> bool:
         asyncpg.exceptions.CannotConnectNowError,
         asyncpg.exceptions.ConnectionFailureError,
         asyncpg.exceptions.ConnectionRejectionError,
-        asyncpg.exceptions.IOError,
-        asyncpg.exceptions.SerializationFailure,
+        asyncpg.exceptions.SerializationError,  # Правильное имя (не SerializationFailure)
         asyncpg.exceptions.DeadlockDetectedError,
     ]
     

@@ -58,6 +58,7 @@ class TelegramService:
         text: str,
         parse_mode: str = "HTML",
         disable_notification: bool = False,
+        message_thread_id: Optional[int] = None,
     ) -> TelegramResponse:
         """Отправляет текстовое сообщение"""
         url = f"{self.base_url}/sendMessage"
@@ -71,6 +72,10 @@ class TelegramService:
 
         if disable_notification:
             payload["disable_notification"] = True
+        
+        # Поддержка Topics (супергруппы с включёнными топиками)
+        if message_thread_id is not None and message_thread_id > 0:
+            payload["message_thread_id"] = message_thread_id
 
         try:
             session = await self._get_session()

@@ -7,9 +7,11 @@
 - Корректный polling Bitrix24 с пагинацией
 - Интеграция с ChatBindingRepository для отправки в чаты
 - Обработка ошибок и логирование
+- HTML-экранирование данных из внешних источников
 """
 import asyncio
 import logging
+from html import escape
 from datetime import datetime, date
 from typing import List, Dict, Any, Optional
 
@@ -25,6 +27,7 @@ from app.database.repository import (
     ChatBindingRepository,
 )
 from app.database.models import Client, DealState, ChatBinding
+from sqlalchemy import select
 from app.services.notification_service import NotificationService
 from app.services.bitrix_polling_service import BitrixPollingService
 from app.services.wait_reasons_service import WaitReasonsService
@@ -138,46 +141,55 @@ async def send_daily_reminders():
     skipped_count = 0
 
     try:
-        # Используем кэш вместо БД (временное решение)
-        from app.bot.commands import _chat_cache
-        
-        logger.info(f"Found {len(_chat_cache)} active chat bindings (from cache)")
+        # Получаем все активные привязки чатов из БД
+        async with get_db_session() as session:
+            chat_binding_repo = ChatBindingRepository(session)
+            result = await session.execute(
+                select(ChatBinding).where(ChatBinding.is_active == True)
+            )
+            active_bindings = result.scalars().all()
+
+        logger.info(f"Found {len(active_bindings)} active chat bindings")
 
         bitrix_polling = BitrixPollingService()
         telegram_service = TelegramService()
 
-        for chat_id, binding in _chat_cache.items():
+        for binding in active_bindings:
             try:
+                chat_id = binding.chat_id
+                message_thread_id = binding.message_thread_id
+
                 # Получаем данные из Bitrix
-                full_item = await bitrix_polling.get_item_by_id(int(binding['bitrix_deal_id']))
+                full_item = await bitrix_polling.get_item_by_id(int(binding.bitrix_deal_id))
 
                 if not full_item:
-                    logger.warning(f"Item {binding['bitrix_deal_id']} not found in Bitrix, skipping")
+                    logger.warning(f"Item {binding.bitrix_deal_id} not found in Bitrix, skipping")
                     skipped_count += 1
                     continue
 
                 # Проверяем, на стадии ли ожидания
                 stage_id = full_item.get('stageId', '')
                 if not BitrixStageService.is_wait_stage(stage_id):
-                    logger.debug(f"Item {binding['bitrix_deal_id']} not on wait stage ({stage_id}), skipping")
+                    logger.debug(f"Item {binding.bitrix_deal_id} not on wait stage ({stage_id}), skipping")
                     skipped_count += 1
                     continue
 
                 # Формируем сообщение
-                message_text = _build_reminder_message(full_item, binding['company_name'])
+                message_text = _build_reminder_message(full_item, binding.company_name)
 
-                # Отправляем в Telegram
+                # Отправляем в Telegram с поддержкой Topics
                 result = await telegram_service.send_message(
                     chat_id=chat_id,
                     text=message_text,
-                    parse_mode="HTML"
+                    parse_mode="HTML",
+                    message_thread_id=message_thread_id,
                 )
 
                 if result.ok:
                     sent_count += 1
                     logger.info(
                         f"Reminder sent to chat {chat_id} "
-                        f"({binding['company_name']}), msg_id={result.message_id}"
+                        f"({binding.company_name}), msg_id={result.message_id}"
                     )
                 else:
                     error_count += 1
@@ -187,7 +199,7 @@ async def send_daily_reminders():
 
             except Exception as e:
                 error_count += 1
-                logger.exception(f"Error processing binding {binding['bitrix_deal_id']}: {e}")
+                logger.exception(f"Error processing binding {binding.bitrix_deal_id}: {e}")
 
         elapsed = (datetime.now() - start_time).total_seconds()
         logger.info("=" * 60)
@@ -207,9 +219,9 @@ def _build_reminder_message(item: Dict[str, Any], company_name: str) -> str:
     """
     Формирует персонализированное сообщение на основе данных Bitrix.
     """
-    inn = item.get('ufCrm20_1738855110463', 'N/A')
+    inn = escape(item.get('ufCrm20_1738855110463', 'N/A'))
     stage_id = item.get('stageId', 'unknown')
-    stage_name = BitrixStageService.get_stage_name(stage_id)
+    stage_name = escape(BitrixStageService.get_stage_name(stage_id))
 
     raw_products = item.get('ufCrm20_1739184606910', [])
     raw_wait_reasons = item.get('ufCrm20_1763475932592', [])
@@ -222,17 +234,17 @@ def _build_reminder_message(item: Dict[str, Any], company_name: str) -> str:
         '8432': 'Меркурий',
         '8434': 'Маркировка',
     }
-    products = [product_map.get(str(p), f"Продукт #{p}") for p in raw_products]
+    products = [escape(product_map.get(str(p), f"Продукт #{p}")) for p in raw_products]
 
     # Формируем action items через сервис
     action_items = WaitReasonsService.format_action_items(raw_wait_reasons)
-    general_risk = WaitReasonsService.get_general_risk(raw_wait_reasons, raw_products)
+    general_risk = escape(WaitReasonsService.get_general_risk(raw_wait_reasons, raw_products))
 
     # Собираем сообщение
     product_lines = [f"• {p}" for p in products]
-    action_lines = [f"• {action}" for action, _ in action_items]
+    action_lines = [f"• {escape(action)}" for action, _ in action_items]
 
-    text = f"""🔍 <b>{company_name}</b>, напоминаем о шагах для завершения внедрения
+    text = f"""🔍 <b>{escape(company_name)}</b>, напоминаем о шагах для завершения внедрения
 
 📋 <b>Данные из Bitrix24:</b>
 • ИНН: {inn}

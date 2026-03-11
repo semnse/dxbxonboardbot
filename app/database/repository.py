@@ -363,16 +363,16 @@ class ChatBindingRepository(BaseRepository[ChatBinding]):
     ) -> List[ChatBinding]:
         """
         Получить привязки по чату и топику.
-        
+
         Args:
             chat_id: ID чата Telegram
-            message_thread_id: ID топика (None для обычных чатов)
-            
+            message_thread_id: ID топика (None для обычных чатов или всех топиков)
+
         Returns:
             Список привязок (обычно 0 или 1 элемент)
         """
         if message_thread_id is not None:
-            # Для Topics чатов
+            # Для Topics чатов — ищем конкретный топик
             result = await self.session.execute(
                 select(ChatBinding).where(
                     ChatBinding.chat_id == chat_id,
@@ -381,11 +381,10 @@ class ChatBindingRepository(BaseRepository[ChatBinding]):
                 )
             )
         else:
-            # Для обычных чатов (message_thread_id IS NULL)
+            # Для обычных чатов или поиска по всем топикам — ищем все активные binding
             result = await self.session.execute(
                 select(ChatBinding).where(
                     ChatBinding.chat_id == chat_id,
-                    ChatBinding.message_thread_id.is_(None),
                     ChatBinding.is_active == True
                 )
             )
@@ -489,8 +488,9 @@ class ChatBindingRepository(BaseRepository[ChatBinding]):
                     updated_at=datetime.utcnow()
                 )
             )
-        
+
         result = await self.session.execute(stmt.returning(ChatBinding))
+        await self.session.commit()
         return result.scalar_one()
 
     async def update(

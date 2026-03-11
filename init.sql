@@ -4,6 +4,27 @@
 -- ============================================
 
 -- ============================================
+-- CHAT BINDINGS (Привязки Telegram чатов к Bitrix)
+-- ============================================
+CREATE TABLE IF NOT EXISTS chat_bindings (
+    id SERIAL PRIMARY KEY,
+    chat_id BIGINT NOT NULL,
+    message_thread_id BIGINT,  -- NULL для обычных чатов, ID топика для Topics
+    chat_title VARCHAR(255),
+    bitrix_deal_id VARCHAR(50) NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(chat_id, message_thread_id, bitrix_deal_id),
+    UNIQUE(chat_id, bitrix_deal_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_bindings_chat_id ON chat_bindings(chat_id);
+CREATE INDEX IF NOT EXISTS idx_chat_bindings_bitrix_deal_id ON chat_bindings(bitrix_deal_id);
+CREATE INDEX IF NOT EXISTS idx_chat_bindings_active ON chat_bindings(is_active) WHERE is_active = TRUE;
+
+-- ============================================
 -- КЛИЕНТЫ (Торговые точки)
 -- ============================================
 CREATE TABLE IF NOT EXISTS clients (

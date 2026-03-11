@@ -74,10 +74,10 @@ class DailyReport(Base):
     __tablename__ = "bot_daily_reports"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(
+    user_id: Mapped[Optional[int]] = mapped_column(
         BigInteger,
-        ForeignKey("bot_users.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("bot_users.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
     sent_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)
@@ -86,7 +86,7 @@ class DailyReport(Base):
     items_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     # Связи
-    user: Mapped["User"] = relationship(back_populates="reports")
+    user: Mapped[Optional["User"]] = relationship(back_populates="reports")
 
     def __repr__(self) -> str:
         return f"<DailyReport(user_id={self.user_id}, status={self.status})>"

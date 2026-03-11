@@ -39,19 +39,6 @@ services:
     networks:
       - bot_network
 
-  # Celery Beat для планирования задач
-  beat:
-    build:
-      context: .
-      dockerfile: Dockerfile.worker
-    command: celery -A app.celery_app beat --loglevel=info
-    env_file: .env
-    depends_on:
-      - redis
-    restart: unless-stopped
-    networks:
-      - bot_network
-
   # PostgreSQL
   db:
     image: postgres:15

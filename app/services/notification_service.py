@@ -6,8 +6,10 @@
 - Правильная интеграция с WaitReasonsService
 - Использование ChatBindingRepository для отправки в чаты
 - Обработка ошибок и логирование
+- HTML-экранирование данных из внешних источников
 """
 import logging
+from html import escape
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
@@ -184,7 +186,7 @@ class NotificationService:
         [Риск]
         """
         # Получаем данные
-        company_name = client.company_name or "Клиент"
+        company_name = escape(client.company_name) or "Клиент"
 
         # Получаем причины ожидания из deal_state
         wait_reasons = deal_state.wait_reasons or [] if deal_state else []
@@ -194,14 +196,14 @@ class NotificationService:
 
         # Формируем action items через сервис WaitReasonsService
         action_items = WaitReasonsService.format_action_items(wait_reasons)
-        general_risk = WaitReasonsService.get_general_risk(wait_reasons, product_codes)
+        general_risk = escape(WaitReasonsService.get_general_risk(wait_reasons, product_codes))
 
         # Формируем список продуктов
         product_names = self._format_products(product_codes)
-        product_lines = [f"• {p}" for p in product_names]
+        product_lines = [f"• {escape(p)}" for p in product_names]
 
         # Формируем список действий
-        action_lines = [f"• {action}" for action, _ in action_items]
+        action_lines = [f"• {escape(action)}" for action, _ in action_items]
 
         # Собираем сообщение
         message_parts = [
@@ -240,9 +242,9 @@ class NotificationService:
         Формирует сообщение напрямую из данных Bitrix.
         Используется для отправки в чаты через ChatBinding.
         """
-        inn = item.get('ufCrm20_1738855110463', 'N/A')
+        inn = escape(item.get('ufCrm20_1738855110463', 'N/A'))
         stage_id = item.get('stageId', 'unknown')
-        stage_name = BitrixStageService.get_stage_name(stage_id)
+        stage_name = escape(BitrixStageService.get_stage_name(stage_id))
 
         raw_products = item.get('ufCrm20_1739184606910', [])
         raw_wait_reasons = item.get('ufCrm20_1763475932592', [])
@@ -255,15 +257,15 @@ class NotificationService:
             '8432': 'Меркурий',
             '8434': 'Маркировка',
         }
-        products = [product_map.get(str(p), f"Продукт #{p}") for p in raw_products]
+        products = [escape(product_map.get(str(p), f"Продукт #{p}")) for p in raw_products]
 
         # Формируем action items через сервис WaitReasonsService
         action_items = WaitReasonsService.format_action_items(raw_wait_reasons)
-        general_risk = WaitReasonsService.get_general_risk(raw_wait_reasons, [])
+        general_risk = escape(WaitReasonsService.get_general_risk(raw_wait_reasons, []))
 
         # Собираем сообщение
         product_lines = [f"• {p}" for p in products]
-        action_lines = [f"• {action}" for action, _ in action_items]
+        action_lines = [f"• {escape(action)}" for action, _ in action_items]
 
         text = f"""🔍 <b>{company_name}</b>, напоминаем о шагах для завершения внедрения
 

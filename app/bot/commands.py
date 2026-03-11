@@ -13,6 +13,7 @@ Telegram Bot Commands Handler
 - ✅ Убран конфликт с subscriptions.py (команды для групп)
 """
 import asyncio
+from html import escape
 from typing import Optional, Final, List, Dict
 
 import structlog
@@ -172,7 +173,7 @@ ADD_DB_ERROR_TEXT: Final[str] = (
 
 REPORT_NO_BINDING_TEXT: Final[str] = (
     "❌ К этому чату не привязана карточка Bitrix.\n\n"
-    "Используйте /add <ID> для привязки."
+    "Используйте /add <code>ID</code> для привязки."
 )
 
 REPORT_BITRIX_ERROR_TEXT: Final[str] = (
@@ -239,11 +240,11 @@ def _format_actions_block_html(actions_by_product: Dict[str, List[str]]) -> str:
             continue
 
         # Заголовок продукта
-        lines.append(f"• <b>{product_name}:</b>")
+        lines.append(f"• <b>{escape(product_name)}:</b>")
 
         # Список действий
         for action in actions:
-            lines.append(f"  - {action}")
+            lines.append(f"  - {escape(action)}")
 
     return "\n".join(lines)
 
@@ -315,11 +316,12 @@ async def _get_chat_binding(
 ) -> Optional[ChatBinding]:
     """
     Получает привязку чата из БД.
-    
+
     Optimized:
     - Использует async SQLAlchemy вместо sync psycopg2
     - Возвращает одну запись или None
     - Кэширует результат в сессии
+    - Сначала ищет с message_thread_id, если не найдено — ищет без него
 
     Args:
         session: DB сессия
@@ -330,7 +332,19 @@ async def _get_chat_binding(
         Модель ChatBinding или None
     """
     repo = ChatBindingRepository(session)
-    bindings = await repo.get_by_chat_and_thread(chat_id, message_thread_id)
+    
+    logger.debug("looking_for_binding", chat_id=chat_id, message_thread_id=message_thread_id)
+    
+    # Сначала ищем с message_thread_id (для Topics)
+    if message_thread_id:
+        bindings = await repo.get_by_chat_and_thread(chat_id, message_thread_id)
+        logger.debug("search_with_thread", chat_id=chat_id, thread_id=message_thread_id, found=len(bindings))
+        if bindings:
+            return bindings[0]
+    
+    # Если не найдено или это не Topic — ищем без message_thread_id
+    bindings = await repo.get_by_chat_and_thread(chat_id, None)
+    logger.debug("search_without_thread", chat_id=chat_id, found=len(bindings))
     return bindings[0] if bindings else None
 
 
@@ -383,6 +397,8 @@ async def _edit_or_answer(
             logger.warning("edit_message_failed", error=str(e))
 
     # Фоллбэк: отправляем новое сообщение
+    logger.info("sending_message", text=text[:1000])
+    logger.debug("full_message_text", text=text)
     await message.answer(text, parse_mode="HTML")
 
 
@@ -461,7 +477,7 @@ async def cmd_add(message: Message) -> None:
 
     if not bitrix_id_str.isdigit():
         await message.answer(
-            ADD_INVALID_FORMAT_TEXT.format(bitrix_id=bitrix_id_str),
+            ADD_INVALID_FORMAT_TEXT.format(bitrix_id=escape(bitrix_id_str)),
             parse_mode="HTML"
         )
         return
@@ -503,9 +519,9 @@ async def cmd_add(message: Message) -> None:
             return
 
         # Извлекаем данные
-        company_name = full_item.get("title", "Клиент")
+        company_name = escape(full_item.get("title", "Клиент"))
         stage_id = full_item.get("stageId", "unknown")
-        stage_name = BitrixStageService.get_stage_name(stage_id)
+        stage_name = escape(BitrixStageService.get_stage_name(stage_id))
 
         # Сохраняем в БД с retry logic
         db_saved = False
@@ -622,7 +638,7 @@ async def cmd_add(message: Message) -> None:
 async def cmd_report(message: Message) -> None:
     """
     Получение текущего отчёта по привязанной карточке.
-    
+
     Optimized:
     - ✅ Единая сессия БД
     - ✅ Минимальные запросы (1 SELECT)
@@ -638,12 +654,15 @@ async def cmd_report(message: Message) -> None:
     progress_message: Optional[Message] = None
 
     try:
+        logger.info("report_command_received", chat_id=message.chat.id, thread_id=message.message_thread_id)
+        
         progress_message = await _send_progress_message(
             message,
             "🔄 Получаю данные из Bitrix24..."
         )
 
         message_thread_id = _get_message_thread_id(message)
+        logger.info("report_search_binding", chat_id=message.chat.id, thread_id=message_thread_id)
 
         # Получаем привязку из БД
         async with get_db_session() as session:
@@ -652,6 +671,7 @@ async def cmd_report(message: Message) -> None:
                 message.chat.id,
                 message_thread_id
             )
+            logger.info("report_binding_result", found=binding is not None, binding_id=binding.id if binding else None)
 
         if not binding:
             await _edit_or_answer(
@@ -687,25 +707,25 @@ async def cmd_report(message: Message) -> None:
             return
 
         # Формируем отчёт
-        company_name = full_item.get("title", "Клиент")
-        inn = full_item.get("ufCrm20_1738855110463", "N/A")
+        company_name = escape(full_item.get("title", "Клиент"))
+        inn = escape(full_item.get("ufCrm20_1738855110463", "N/A"))
         stage_id = full_item.get("stageId", "unknown")
-        stage_name = BitrixStageService.get_stage_name(stage_id)
+        stage_name = escape(BitrixStageService.get_stage_name(stage_id))
 
         raw_products = full_item.get("ufCrm20_1739184606910", [])
         raw_wait_reasons = full_item.get("ufCrm20_1763475932592", [])
 
         product_map = bitrix_polling.product_id_map
         products: List[str] = [
-            product_map.get(str(p), f"Продукт #{p}")
+            escape(product_map.get(str(p), f"Продукт #{p}"))
             for p in raw_products
         ]
 
         from app.services.wait_reasons_service import WaitReasonsService
         from app.services.product_actions_service import ProductActionsService
-        
+
         action_items = WaitReasonsService.format_action_items(raw_wait_reasons)
-        general_risk = WaitReasonsService.get_general_risk(raw_wait_reasons, raw_products)
+        general_risk = escape(WaitReasonsService.get_general_risk(raw_wait_reasons, raw_products))
 
         product_lines = [f"• {action}" for action in products]
         action_lines = [f"• {action}" for action, _ in action_items]
@@ -726,7 +746,7 @@ async def cmd_report(message: Message) -> None:
             f"{chr(10).join(action_lines) if action_lines else '• Нет активных задач'}\n\n"
             f"💡 <b>Это важно, потому что:</b>\n"
             f"{general_risk}\n\n"
-            f"{actions_html if actions_html else '✅ <b>Доступно на этой стадии:</b>\n• Нет доступных действий на текущей стадии'}\n\n"
+            f"{actions_html if actions_html else f'✅ <b>Доступно на этой стадии:</b>{chr(10)}• Нет доступных действий на текущей стадии'}\n\n"
             f"---\n"
             f"<i>✨ Docsinbox Внедрение — ваш надёжный помощник!</i>"
         )
@@ -859,12 +879,12 @@ async def cmd_product_report(message: Message) -> None:
             return
 
         # Формируем отчёт по продуктам
-        company_name = full_item.get("title", "Клиент")
+        company_name = escape(full_item.get("title", "Клиент"))
         raw_products = full_item.get("ufCrm20_1739184606910", [])
 
         product_map = bitrix_polling.product_id_map
         products: List[str] = [
-            product_map.get(str(p), f"Продукт #{p}")
+            escape(product_map.get(str(p), f"Продукт #{p}"))
             for p in raw_products
         ]
 

@@ -42,7 +42,7 @@ celery_app.conf.beat_schedule = {
     },
     "send-daily-reports": {
         "task": "app.tasks.send_task.send_daily_reports",
-        "schedule": crontab(hour=9, minute=0),  # 09:00 MSK
+        "schedule": crontab(hour=settings.bot_send_time_hour, minute=0),  # 09:00 MSK (из .env)
     },
 }
 

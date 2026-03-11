@@ -15,7 +15,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Импортируем настройки и модели
 from app.config import settings
 from app.database.connection import Base
+
+# Импортируем ВСЕ модели для корректной авто-генерации миграций
 from app.database.models_bot import User, Subscription, DailyReport
+from app.database.models import (
+    Client, Product, ClientProduct, DealState, DealStage,
+    MessageLog, WaitReason, RiskMessage, ProductFeature,
+    BotSetting, ChatBinding
+)
 
 # Alembic Config object
 config = context.config

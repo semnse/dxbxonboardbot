@@ -6,6 +6,7 @@ Telegram-бот онбординга для смарт-процессов Bitrix
 - Бот polling запущен как asyncio task в том же event loop
 - Правильная инициализация БД
 - Корректная обработка shutdown
+- Удалено дублирование планировщиков (используется Celery Beat)
 """
 import asyncio
 import logging
@@ -19,7 +20,6 @@ import structlog
 from app.config import settings
 from app.database.connection import init_db, close_db
 from app.bot import dp, bot
-from app.bot.scheduler import start_scheduler, shutdown_scheduler
 from app.bot.commands import commands_router
 from app.bot.subscriptions import subscriptions_router
 from app.api.routes import webhook, health
@@ -74,13 +74,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Продолжаем запуск, БД может быть недоступна временно
 
     try:
-        # Запуск планировщика
-        await start_scheduler()
-        logger.info("Scheduler started", stage="startup")
-    except Exception as e:
-        logger.error(f"Failed to start scheduler: {e}")
-
-    try:
         # Запуск бота polling как asyncio task в том же event loop
         global _bot_polling_task
         _bot_polling_task = asyncio.create_task(run_bot_polling_task())
@@ -111,13 +104,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 logger.info("Bot polling task cancelled successfully")
             except Exception as e:
                 logger.error(f"Error cancelling bot polling task: {e}")
-
-        # Остановка планировщика
-        try:
-            await shutdown_scheduler()
-            logger.info("Scheduler stopped")
-        except Exception as e:
-            logger.error(f"Error stopping scheduler: {e}")
 
         # Закрытие подключения к БД
         try:
