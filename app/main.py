@@ -7,9 +7,11 @@ Telegram-бот онбординга для смарт-процессов Bitrix
 - Правильная инициализация БД
 - Корректная обработка shutdown
 - Удалено дублирование планировщиков (используется Celery Beat)
+- Используется SelectorEventLoop для совместимости с psycopg на Windows
 """
 import asyncio
 import logging
+import selectors
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -19,11 +21,16 @@ import structlog
 
 from app.config import settings
 from app.database.connection import init_db, close_db
-from app.bot import dp, bot
+from app.bot import dp, bot, start_scheduler, shutdown_scheduler
 from app.bot.commands import commands_router
 from app.bot.subscriptions import subscriptions_router
 from app.api.routes import webhook, health
 from app.utils.logger import setup_logging
+
+# Настраиваем SelectorEventLoop для совместимости с psycopg на Windows
+# Это должно быть вызвано до любого asyncio кода
+if hasattr(asyncio, 'SelectorEventLoop'):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Подключаем роутеры с обработчиками
 dp.include_router(commands_router)
@@ -81,6 +88,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         logger.error(f"Failed to start bot polling: {e}")
 
+    # Запуск планировщика задач (рассылка в 9:00 МСК)
+    try:
+        await start_scheduler()
+        logger.info("Scheduler started", stage="startup")
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {e}")
+
     # Даём время на запуск задач
     await asyncio.sleep(2)
 
@@ -104,6 +118,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 logger.info("Bot polling task cancelled successfully")
             except Exception as e:
                 logger.error(f"Error cancelling bot polling task: {e}")
+
+        # Остановка планировщика
+        try:
+            await shutdown_scheduler()
+            logger.info("Scheduler stopped", stage="shutdown")
+        except Exception as e:
+            logger.error(f"Error stopping scheduler: {e}")
 
         # Закрытие подключения к БД
         try:

@@ -28,7 +28,6 @@ from sqlalchemy.exc import (
     IntegrityError,
 )
 from sqlalchemy import text
-import asyncpg
 
 from app.config import settings
 
@@ -50,20 +49,25 @@ AsyncSessionLocal: Optional[async_sessionmaker[AsyncSession]] = None
 def _create_engine() -> AsyncEngine:
     """
     Создаёт асинхронный движок с оптимизированными настройками.
-    
+
     Оптимизации пула соединений:
     - pool_pre_ping=True: проверка соединений перед использованием
     - pool_size=10: увеличенный пул для высокой нагрузки
     - max_overflow=20: больше соединений при пиках
     - pool_recycle=1800: пересоздание соединений каждые 30 минут
     - pool_timeout=30: таймаут получения соединения из пула
+    
+    Примечание: Используем psycopg вместо asyncpg для совместимости с Python 3.13 на Windows
     """
     db_url = settings.database_url
     if db_url.startswith("postgresql://"):
-        db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        # Используем psycopg вместо asyncpg (не работает с Python 3.13 на Windows)
+        db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
     logger.info(f"Creating database engine with URL: {db_url[:60]}...")
 
+    # Для psycopg на Windows требуется SelectorEventLoop
+    # Это должно быть настроено в main.py при запуске приложения
     return create_async_engine(
         db_url,
         echo=False,
@@ -72,13 +76,6 @@ def _create_engine() -> AsyncEngine:
         max_overflow=20,
         pool_recycle=1800,
         pool_timeout=30,
-        connect_args={
-            "server_settings": {
-                "application_name": "onboarding_bot",
-            },
-            "timeout": 30,  # Таймаут подключения
-            "command_timeout": 60,  # Таймаут выполнения запросов
-        },
     )
 
 
@@ -131,38 +128,41 @@ async def close_db():
 def _is_retryable_error(error: Exception) -> bool:
     """
     Проверяет, можно ли повторить запрос при данной ошибке.
-    
+
     Retryable ошибки:
     - OperationalError: проблемы с подключением
-    - asyncpg.exceptions.*: transient ошибки PostgreSQL
+    - psycopg2.errors.*: transient ошибки PostgreSQL
     - DatabaseError: временные ошибки БД
-    
+
     Non-retryable:
     - IntegrityError: ошибки целостности (дубликаты, FK)
     """
     if isinstance(error, IntegrityError):
         return False
-    
+
     if isinstance(error, (OperationalError, DatabaseError)):
         return True
-    
-    # asyncpg специфичные ошибки
-    # Примечание: используем правильные имена классов исключений asyncpg
-    retryable_exceptions = [
-        asyncpg.exceptions.InterfaceError,
-        asyncpg.exceptions.InterfaceWarning,
-        asyncpg.exceptions.TooManyConnectionsError,
-        asyncpg.exceptions.CannotConnectNowError,
-        asyncpg.exceptions.ConnectionFailureError,
-        asyncpg.exceptions.ConnectionRejectionError,
-        asyncpg.exceptions.SerializationError,  # Правильное имя (не SerializationFailure)
-        asyncpg.exceptions.DeadlockDetectedError,
-    ]
-    
-    for exc_type in retryable_exceptions:
-        if isinstance(error, exc_type):
-            return True
-    
+
+    # psycopg2 специфичные ошибки (если используются)
+    # Для psycopg2 ошибки находятся в модуле psycopg2.errors
+    try:
+        import psycopg2.errors
+        retryable_exceptions = [
+            psycopg2.errors.InterfaceError,
+            psycopg2.errors.InterfaceWarning,
+            psycopg2.errors.TooManyConnectionsError,
+            psycopg2.errors.CannotConnectNowError,
+            psycopg2.errors.ConnectionFailureError,
+            psycopg2.errors.SerializationFailure,
+            psycopg2.errors.DeadlockDetectedError,
+        ]
+
+        for exc_type in retryable_exceptions:
+            if isinstance(error, exc_type):
+                return True
+    except ImportError:
+        pass
+
     return False
 
 
